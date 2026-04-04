@@ -1,0 +1,134 @@
+# Benchmark queries for the sample_repo test fixture
+# Tests all task modes and various query patterns
+
+queries:
+  # Bug fix mode
+  - query: "bug in token validation - TypeError when token is expired"
+    mode: bug_fix
+    expected_files:
+      - "auth/token_handler.py"
+      - "tests/test_auth.py"
+    description: "Should find token handling code and related tests"
+
+  - query: "error in password hashing function"
+    mode: bug_fix
+    expected_files:
+      - "auth/token_handler.py"
+    description: "Should find hash_password and verify_password functions"
+
+  - query: "database connection crash on insert"
+    mode: bug_fix
+    expected_files:
+      - "models/database.py"
+    description: "Should find Database class with CRUD operations"
+
+  # Trace flow mode
+  - query: "trace the login flow from route to auth"
+    mode: trace_flow
+    expected_files:
+      - "routes/api.py"
+      - "auth/token_handler.py"
+      - "auth/session.py"
+    description: "Should trace login through route handler to auth modules"
+
+  - query: "how does user registration work"
+    mode: trace_flow
+    expected_files:
+      - "routes/api.py"
+      - "models/database.py"
+    description: "Should trace registration from API route to database"
+
+  - query: "how does the API client make authenticated requests"
+    mode: trace_flow
+    expected_files:
+      - "services/api_client.ts"
+    description: "Should find the TypeScript API client with auth headers"
+
+  # Test lookup mode
+  - query: "find tests for authentication"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_auth.py"
+    description: "Should find auth test file"
+
+  - query: "test coverage for route handlers"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_routes.py"
+    description: "Should find route test file"
+
+  - query: "unit tests for token rotation"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_auth.py"
+      - "auth/token_handler.py"
+    description: "Should find test file and implementation"
+
+  # Config lookup mode
+  - query: "JWT configuration settings"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "Should find settings with JWT config"
+
+  - query: "environment variables for database"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "Should find DB connection settings"
+
+  - query: "rate limiting configuration"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "Should find rate limit settings"
+
+  # General mode
+  - query: "where is the EventEmitter class defined"
+    mode: null
+    expected_files:
+      - "utils/helpers.js"
+    description: "Symbol search for EventEmitter"
+
+  - query: "file that handles sessions"
+    mode: null
+    expected_files:
+      - "auth/session.py"
+    description: "Path and semantic match for session handling"
+
+  - query: "debounce utility function"
+    mode: null
+    expected_files:
+      - "utils/helpers.js"
+    description: "Symbol search for debounce"
+
+  - query: "slugify function implementation"
+    mode: null
+    expected_files:
+      - "utils/helpers.js"
+    description: "Symbol search for slugify"
+
+  - query: "Database CRUD operations"
+    mode: null
+    expected_files:
+      - "models/database.py"
+    description: "Should find Database class with create/read/update/delete"
+
+  - query: "token_handler.py"
+    mode: null
+    expected_files:
+      - "auth/token_handler.py"
+    description: "Direct filename search"
+
+  - query: "handle_profile route"
+    mode: null
+    expected_files:
+      - "routes/api.py"
+      - "tests/test_routes.py"
+    description: "Symbol and content search for handle_profile"
+
+  - query: "formatDate and date utilities"
+    mode: null
+    expected_files:
+      - "utils/helpers.js"
+    description: "Symbol search for formatDate"
