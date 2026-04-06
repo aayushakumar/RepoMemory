@@ -10,7 +10,7 @@
 [![Vitest](https://img.shields.io/badge/tested_with-vitest-6E9F18.svg)](https://vitest.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-*Index a codebase with one command. Search with natural language. Get token-budget-aware context packs — ready to paste into any LLM.*
+*Index a codebase with one command. Search with natural language. Get token-budget-aware context packs - ready to paste into any LLM.*
 
 </div>
 
@@ -31,7 +31,7 @@
 11. [Configuration](#configuration)
 12. [Project Structure](#project-structure)
 13. [Tech Stack](#tech-stack)
-14. [How It Works — Deep Dive](#how-it-works--deep-dive)
+14. [How It Works - Deep Dive](#how-it-works--deep-dive)
 15. [Benchmark Suite](#benchmark-suite)
 16. [Contributing](#contributing)
 
@@ -57,7 +57,7 @@ RepoMemory solves this with a **hybrid retrieval pipeline**:
   Context Pack: 3 files, 512 tokens, ready to use
 ```
 
-Everything runs **locally** — no API keys, no cloud calls, no data leaves your machine.
+Everything runs **locally** - no API keys, no cloud calls, no data leaves your machine.
 
 ---
 
@@ -65,17 +65,17 @@ Everything runs **locally** — no API keys, no cloud calls, no data leaves your
 
 | Feature | Details |
 |---------|---------|
-| **Hybrid search** | BM25 lexical + FAISS semantic + fuzzy path + symbol name — all fused with RRF |
+| **Hybrid search** | BM25 lexical + FAISS semantic + fuzzy path + symbol name - all fused with RRF |
 | **Symbol-aware indexing** | tree-sitter extracts functions, classes, methods from Python / JS / TS |
-| **4 Task Modes** | Bug Fix, Trace Flow, Test Lookup, Config Lookup — auto-detected or manual |
+| **4 Task Modes** | Bug Fix, Trace Flow, Test Lookup, Config Lookup  - auto-detected or manual |
 | **Token budgets** | Greedy packer respects any token limit (default 8 000, configurable up to 100 000) |
 | **Behavioral memory** | Tracks opened / accepted / thumbs-up actions; frecency score boosts future results |
 | **Relevance explanations** | Every result comes with a human-readable reason: *"High lexical match for 'rotate_token'; semantically similar to query"* |
 | **Export formats** | Copy context pack as Markdown (paste into LLM prompt) or JSON |
 | **Incremental indexing** | SHA-256 hash per file; only changed files are re-embedded |
-| **Benchmark suite** | Recall@k, MRR, NDCG, MAP — run against YAML query sets |
+| **Benchmark suite** | Recall@k, MRR, NDCG, MAP - run against YAML query sets |
 | **REST API + Swagger UI** | Full OpenAPI docs at `localhost:8000/docs` |
-| **Web UI** | Dark-themed React frontend — search, explore, manage repos, view memory |
+| **Web UI** | Dark-themed React frontend - search, explore, manage repos, view memory |
 
 ---
 
@@ -184,7 +184,7 @@ make dev-frontend
 
 **3. Index a repository**
 
-Via the UI — go to **Repositories** → enter a path → click **Index Repository**.
+Via the UI - go to **Repositories** → enter a path → click **Index Repository**.
 
 Or via `curl`:
 
@@ -251,7 +251,7 @@ cd backend && python -m pytest tests/test_retrieval.py -v
 cd backend && python -m pytest tests/ --cov=repomemory --cov-report=term-missing
 ```
 
-**Backend test suite** — 28 tests across 5 files:
+**Backend test suite** - 28 tests across 5 files:
 
 | File | Tests | What it covers |
 |------|-------|---------------|
@@ -279,15 +279,15 @@ cd frontend && npm run test:ui
 cd frontend && npm run test:coverage
 ```
 
-**Frontend test suite** — 41 tests across 5 files:
+**Frontend test suite** - 41 tests across 5 files:
 
 | File | Tests | What it covers |
 |------|-------|---------------|
 | `ResultCard.test.tsx` | 10 | Expand/collapse, score display, snippet rendering |
 | `ContextPackView.test.tsx` | 8 | Token bar, file list, clipboard copy (Markdown / JSON) |
 | `Sidebar.test.tsx` | 7 | Nav links, active state, brand name |
-| `api.test.ts` | 7 | HTTP client — correct methods, URLs, request bodies, error handling |
-| `markdownExport.test.ts` | 9 | Markdown export format — query, mode, tokens, code fences |
+| `api.test.ts` | 7 | HTTP client - correct methods, URLs, request bodies, error handling |
+| `markdownExport.test.ts` | 9 | Markdown export format - query, mode, tokens, code fences |
 
 ### Run all tests
 
@@ -304,17 +304,17 @@ make test-all
 | Method | URL | Body | Description |
 |--------|-----|------|-------------|
 | `POST` | `/api/repos` | `{ "path": "/abs/path" }` | Index a new repository |
-| `GET` | `/api/repos` | — | List all indexed repositories |
-| `GET` | `/api/repos/{id}` | — | Get repository details & stats |
-| `POST` | `/api/repos/{id}/reindex` | — | Force full re-index |
-| `DELETE` | `/api/repos/{id}` | — | Remove from index (DB + FAISS) |
+| `GET` | `/api/repos` | - | List all indexed repositories |
+| `GET` | `/api/repos/{id}` | - | Get repository details & stats |
+| `POST` | `/api/repos/{id}/reindex` | - | Force full re-index |
+| `DELETE` | `/api/repos/{id}` | - | Remove from index (DB + FAISS) |
 
 ### Search
 
 | Method | URL | Body | Description |
 |--------|-----|------|-------------|
 | `POST` | `/api/search` | `SearchRequest` | Search + build context pack |
-| `GET` | `/api/search/modes` | — | List task modes with keywords |
+| `GET` | `/api/search/modes` | - | List task modes with keywords |
 
 **SearchRequest schema:**
 ```json
@@ -360,8 +360,8 @@ make test-all
 | Method | URL | Body | Description |
 |--------|-----|------|-------------|
 | `POST` | `/api/actions` | `ActionRequest` | Record feedback (thumbs up, selected, etc.) |
-| `GET` | `/api/memory/{repo_id}/stats` | — | Memory stats for a repo |
-| `DELETE` | `/api/memory/{repo_id}` | — | Clear all memory for a repo |
+| `GET` | `/api/memory/{repo_id}/stats` | - | Memory stats for a repo |
+| `DELETE` | `/api/memory/{repo_id}` | - | Clear all memory for a repo |
 
 **ActionRequest schema:**
 ```json
@@ -379,7 +379,7 @@ Valid `action` values: `opened`, `selected`, `accepted`, `dismissed`, `thumbs_up
 | Method | URL | Body | Description |
 |--------|-----|------|-------------|
 | `POST` | `/api/eval/run` | `{ "repo_id": 1, "query_set": "sample_repo" }` | Run benchmark suite |
-| `GET` | `/api/eval/query-sets` | — | List available query sets |
+| `GET` | `/api/eval/query-sets` | - | List available query sets |
 
 ### Health
 
@@ -454,12 +454,12 @@ RepoMemory/
 │   │       │   ├── db.py            # Engine, session factory, init_db()
 │   │       │   └── schemas.py       # Pydantic request/response models
 │   │       ├── indexer/
-│   │       │   ├── scanner.py       # scan_repository() — pathspec + gitignore
+│   │       │   ├── scanner.py       # scan_repository() - pathspec + gitignore
 │   │       │   ├── metadata.py      # extract_and_store_metadata()
 │   │       │   ├── symbols.py       # tree-sitter → Python / JS / TS symbols
 │   │       │   ├── chunker.py       # symbol-aware + sliding-window chunking
 │   │       │   ├── embedder.py      # sentence-transformers + FAISS per-repo index
-│   │       │   └── orchestrator.py  # index_repository() — full pipeline
+│   │       │   └── orchestrator.py  # index_repository() - full pipeline
 │   │       ├── retrieval/
 │   │       │   ├── lexical.py       # BM25Okapi over chunk content
 │   │       │   ├── semantic.py      # FAISS cosine similarity
@@ -467,9 +467,9 @@ RepoMemory/
 │   │       │   ├── symbol.py        # fuzzy symbol name search
 │   │       │   ├── combiner.py      # RRF score fusion + RankedResult assembly
 │   │       │   ├── task_router.py   # rule-based query → mode classifier
-│   │       │   └── orchestrator.py  # retrieve() — parallel retrieval entry point
+│   │       │   └── orchestrator.py  # retrieve() - parallel retrieval entry point
 │   │       ├── context/
-│   │       │   ├── packer.py        # build_context_pack() — greedy token budget
+│   │       │   ├── packer.py        # build_context_pack() - greedy token budget
 │   │       │   └── explainer.py     # template-based relevance explanations
 │   │       ├── memory/
 │   │       │   └── tracker.py       # record_action(), get_memory_scores() frecency
@@ -537,12 +537,12 @@ RepoMemory/
 |---------|---------|------|
 | **FastAPI** | 0.115+ | REST API framework, async, OpenAPI docs |
 | **SQLAlchemy** | 2.0 | ORM with `mapped_column` style; SQLite with WAL |
-| **sentence-transformers** | 3.0+ | Local embedding — `all-MiniLM-L6-v2` (384-dim) |
+| **sentence-transformers** | 3.0+ | Local embedding - `all-MiniLM-L6-v2` (384-dim) |
 | **FAISS** | 1.8+ | Vector similarity search (`IndexFlatIP` after L2 norm) |
 | **tree-sitter** | 0.23+ | Incremental AST parsing for function/class extraction |
 | **rank-bm25** | 0.2+ | Okapi BM25 lexical search over tokenized chunks |
 | **rapidfuzz** | 3.9+ | Fuzzy string matching for path and symbol search |
-| **tiktoken** | 0.7+ | Token counting (cl100k_base — accurate for GPT models) |
+| **tiktoken** | 0.7+ | Token counting (cl100k_base - accurate for GPT models) |
 | **pydantic-settings** | 2.0+ | Config from env vars with `REPOMEMORY_` prefix |
 | **pathspec** | 0.12+ | gitignore-compatible file ignore rules |
 | **PyYAML** | 6.0+ | Benchmark query set loading |
@@ -566,48 +566,48 @@ RepoMemory/
 
 ---
 
-## How It Works — Deep Dive
+## How It Works - Deep Dive
 
 ### 1. Indexing pipeline
 
 `index_repository(repo_id, repo_path)` in `indexer/orchestrator.py` runs 5 stages:
 
-1. **Scan** — `scanner.py` walks the directory tree with `pathlib`, respects `.gitignore` via `pathspec("gitignore")`, filters by extension and file size. Returns a list of `ScannedFile` dataclasses with path, extension, size, and SHA-256 hash of the first 8 KB.
+1. **Scan** - `scanner.py` walks the directory tree with `pathlib`, respects `.gitignore` via `pathspec("gitignore")`, filters by extension and file size. Returns a list of `ScannedFile` dataclasses with path, extension, size, and SHA-256 hash of the first 8 KB.
 
-2. **Metadata** — `metadata.py` upserts rows into `files` table. Incremental: compares content hashes, skips unchanged files, removes deleted files.
+2. **Metadata** - `metadata.py` upserts rows into `files` table. Incremental: compares content hashes, skips unchanged files, removes deleted files.
 
-3. **Symbol extraction** — `symbols.py` initialises tree-sitter parsers (one per language) and walks the AST to extract:
+3. **Symbol extraction** - `symbols.py` initialises tree-sitter parsers (one per language) and walks the AST to extract:
    - Python: `function_definition`, `class_definition`, `decorated_definition`
    - JavaScript / TypeScript: `function_declaration`, `class_declaration`, `method_definition`, `arrow_function`, `import_statement`, `export_statement`
    - Classes include their methods as children (`parent_symbol_id` FK).
 
-4. **Chunking** — `chunker.py` produces `Chunk` records:
+4. **Chunking** - `chunker.py` produces `Chunk` records:
    - If a file has symbols, each function or class body becomes one chunk.
    - Uncovered regions (between symbols) are chunked if > 10 tokens.
    - Files without symbols fall back to a sliding window (200 lines, 50-line overlap).
    - Each chunk's token count is measured with `tiktoken` `cl100k_base`. Chunks > 512 tokens are split further.
 
-5. **Embedding** — `embedder.py` encodes all chunks in batches of 64 with `sentence-transformers`. Vectors are L2-normalised then stored in a per-repo `faiss.IndexFlatIP`. A JSON sidecar maps `faiss_position → chunk_id`.
+5. **Embedding** - `embedder.py` encodes all chunks in batches of 64 with `sentence-transformers`. Vectors are L2-normalised then stored in a per-repo `faiss.IndexFlatIP`. A JSON sidecar maps `faiss_position → chunk_id`.
 
 ### 2. Retrieval pipeline
 
 `retrieve(query, repo_id, mode)` in `retrieval/orchestrator.py`:
 
-1. **Task classification** — `task_router.py` matches the query against keyword patterns (regex, multi-word phrases, word-boundary single words) and returns a mode name + `WeightProfile`.
+1. **Task classification** - `task_router.py` matches the query against keyword patterns (regex, multi-word phrases, word-boundary single words) and returns a mode name + `WeightProfile`.
 
-2. **Parallel retrieval** — Four retrievers run concurrently in a `ThreadPoolExecutor(max_workers=4)`:
-   - `lexical_search` — tokenises the query, scores chunks with BM25, normalises to [0,1].
-   - `semantic_search` — encodes query, searches FAISS, clamps similarities to [0,1].
-   - `path_search` — splits query into tokens, scores each file's path with `rapidfuzz.partial_ratio + ratio`, threshold 0.3.
-   - `symbol_search` — extracts CamelCase / snake_case tokens from query, fuzzy-matches against all symbol names, threshold 0.4.
+2. **Parallel retrieval** - Four retrievers run concurrently in a `ThreadPoolExecutor(max_workers=4)`:
+   - `lexical_search` - tokenises the query, scores chunks with BM25, normalises to [0,1].
+   - `semantic_search` - encodes query, searches FAISS, clamps similarities to [0,1].
+   - `path_search` - splits query into tokens, scores each file's path with `rapidfuzz.partial_ratio + ratio`, threshold 0.3.
+   - `symbol_search` - extracts CamelCase / snake_case tokens from query, fuzzy-matches against all symbol names, threshold 0.4.
 
-3. **Score fusion** — `combiner.py` uses **Reciprocal Rank Fusion** (RRF, K=60):
+3. **Score fusion** - `combiner.py` uses **Reciprocal Rank Fusion** (RRF, K=60):
    ```
    rrf_score(d) = Σ  1 / (K + rank_in_list_i)
    ```
    Scores are aggregated per `file_id`. Memory frecency scores (from `tracker.py`) are added to the RRF total. Results are sorted descending.
 
-4. **Context packing** — `packer.py` greedily adds the highest-scoring file's top snippets until the token budget is filled, then calls `explainer.py` to attach human-readable reason strings.
+4. **Context packing** - `packer.py` greedily adds the highest-scoring file's top snippets until the token budget is filled, then calls `explainer.py` to attach human-readable reason strings.
 
 ### 3. Memory / Frecency
 
@@ -621,7 +621,7 @@ Action weights: `thumbs_up=4`, `accepted=3`, `selected=2`, `opened=1`, `thumbs_d
 
 ### 4. Score Fusion Detail (RRF)
 
-RRF is used instead of a weighted sum because different retrievers produce scores on incompatible scales — cosine similarities cluster near 0.6–0.9 while BM25 scores span 0–40. RRF converts each list to *rank positions* first, making fusion stable regardless of absolute score distributions.
+RRF is used instead of a weighted sum because different retrievers produce scores on incompatible scales - cosine similarities cluster near 0.6–0.9 while BM25 scores span 0–40. RRF converts each list to *rank positions* first, making fusion stable regardless of absolute score distributions.
 
 ---
 
@@ -663,7 +663,7 @@ curl -X POST http://localhost:8000/api/eval/run \
 | **Recall@5** | Are any expected files in the top 5? |
 | **Recall@10** | Are any expected files in the top 10? |
 | **Precision@5** | What fraction of the top 5 are expected files? |
-| **MRR** | Mean Reciprocal Rank — `1 / (rank of first expected file)` |
+| **MRR** | Mean Reciprocal Rank - `1 / (rank of first expected file)` |
 | **MAP** | Mean Average Precision |
 | **NDCG@5** | Normalized Discounted Cumulative Gain at 5 |
 | **Avg Latency** | Mean query time in milliseconds |
