@@ -32,16 +32,17 @@ describe('API client', () => {
     expect(result).toEqual([])
   })
 
-  it('indexRepo sends POST /api/repos with path', async () => {
+  it('indexRepo sends POST /api/repos with body', async () => {
     const fakeRepo = { id: 1, name: 'my-repo', path: '/src/my-repo', status: 'ready' }
     mockFetch.mockReturnValueOnce(jsonResponse(fakeRepo))
     const { api } = await import('../api/client')
-    const result = await api.indexRepo('/src/my-repo')
+    const body = { url: 'https://github.com/owner/my-repo' }
+    const result = await api.indexRepo(body)
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/repos',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ path: '/src/my-repo' }),
+        body: JSON.stringify(body),
       })
     )
     expect(result).toEqual(fakeRepo)

@@ -25,7 +25,7 @@ export default function Sidebar() {
           </span>
         </div>
         <p className="text-[11px] text-text-dim mt-1 font-mono">
-          local code retrieval engine
+          AI code retrieval engine
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export default function Sidebar() {
           className="flex items-center gap-2 text-text-dim hover:text-text-secondary text-xs transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
-          <span>v0.1.0</span>
+          <span>v0.2.0</span>
         </a>
       </div>
     </aside>

@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
-import type { SearchRequest } from "./types";
+import type { IndexRepoRequest, SearchRequest } from "./types";
 
 /* ── Repos ── */
 export function useRepos() {
-  return useQuery({ queryKey: ["repos"], queryFn: api.listRepos });
+  return useQuery({ queryKey: ["repos"], queryFn: api.listRepos, refetchInterval: 5000 });
 }
 
 export function useRepo(id: number) {
@@ -18,7 +18,7 @@ export function useRepo(id: number) {
 export function useIndexRepo() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (path: string) => api.indexRepo(path),
+    mutationFn: (body: IndexRepoRequest) => api.indexRepo(body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["repos"] }),
   });
 }

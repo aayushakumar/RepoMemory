@@ -19,7 +19,7 @@ describe('Sidebar', () => {
 
   it('renders tagline', () => {
     renderSidebar()
-    expect(screen.getByText('local code retrieval engine')).toBeInTheDocument()
+    expect(screen.getByText('AI code retrieval engine')).toBeInTheDocument()
   })
 
   it('renders all three navigation links', () => {
@@ -50,6 +50,6 @@ describe('Sidebar', () => {
 
   it('renders version badge', () => {
     renderSidebar()
-    expect(screen.getByText('v0.1.0')).toBeInTheDocument()
+    expect(screen.getByText('v0.2.0')).toBeInTheDocument()
   })
 })

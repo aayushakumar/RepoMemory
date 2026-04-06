@@ -4,12 +4,22 @@ export interface Repo {
   id: number;
   name: string;
   path: string;
+  url: string | null;
+  branch: string | null;
   status: string;
+  error_message: string | null;
   file_count: number;
   symbol_count: number;
   chunk_count: number;
   indexed_at: string | null;
   language_summary: string | null;
+}
+
+export interface IndexRepoRequest {
+  url?: string;
+  path?: string;
+  branch?: string;
+  token?: string;
 }
 
 export interface IndexingStats {
@@ -92,4 +102,14 @@ export interface MemoryStats {
   total_actions: number;
   top_files: Array<{ file_id: number; path: string; action_count: number }>;
   recent_queries: Array<{ query_id: number; text: string; mode: string; timestamp: string }>;
+}
+
+export interface ExplainRequest {
+  query: string;
+  context_pack: ContextPack;
+}
+
+export interface ExplainResponse {
+  summary: string;
+  model: string | null;
 }

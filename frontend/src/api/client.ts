@@ -1,4 +1,4 @@
-const BASE = "";
+const BASE = import.meta.env.VITE_API_URL || "";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${url}`, {
@@ -15,8 +15,11 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 /* ── Repos ── */
 import type {
   Repo,
+  IndexRepoRequest,
   SearchRequest,
   SearchResponse,
+  ExplainRequest,
+  ExplainResponse,
   TaskMode,
   MemoryStats,
 } from "./types";
@@ -27,10 +30,10 @@ export const api = {
 
   getRepo: (id: number) => request<Repo>(`/api/repos/${id}`),
 
-  indexRepo: (path: string) =>
+  indexRepo: (body: IndexRepoRequest) =>
     request<Repo>("/api/repos", {
       method: "POST",
-      body: JSON.stringify({ path }),
+      body: JSON.stringify(body),
     }),
 
   reindexRepo: (id: number) =>
@@ -42,6 +45,12 @@ export const api = {
   /* Search */
   search: (req: SearchRequest) =>
     request<SearchResponse>("/api/search", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }),
+
+  explain: (req: ExplainRequest) =>
+    request<ExplainResponse>("/api/search/explain", {
       method: "POST",
       body: JSON.stringify(req),
     }),
