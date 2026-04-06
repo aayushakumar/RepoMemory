@@ -1,8 +1,15 @@
-"""Embedding generation and FAISS index management."""
+"""Embedding generation and FAISS index management.
+
+Supports two providers:
+- "local": sentence-transformers (all-MiniLM-L6-v2) — runs on-device, no API key needed
+- "huggingface": HuggingFace Inference API — free tier, no GPU needed
+"""
 
 import json
 import logging
+import time
 from pathlib import Path
+from typing import Protocol
 
 import faiss
 import numpy as np
@@ -14,18 +21,117 @@ from repomemory.models.tables import Chunk
 
 logger = logging.getLogger(__name__)
 
-_model = None
+
+# ── Embedding provider protocol ──
+
+class EmbeddingProvider(Protocol):
+    def encode(self, texts: list[str], normalize: bool = True) -> np.ndarray: ...
 
 
-def _get_model():
-    global _model
-    if _model is None:
-        from sentence_transformers import SentenceTransformer
+class LocalEmbeddingProvider:
+    """sentence-transformers running locally."""
 
-        _model = SentenceTransformer(settings.embedding_model)
-        logger.info("Loaded embedding model: %s", settings.embedding_model)
-    return _model
+    def __init__(self):
+        self._model = None
 
+    def _load(self):
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer
+
+            self._model = SentenceTransformer(settings.embedding_model)
+            logger.info("Loaded local embedding model: %s", settings.embedding_model)
+
+    def encode(self, texts: list[str], normalize: bool = True) -> np.ndarray:
+        self._load()
+        embeddings = self._model.encode(
+            texts,
+            batch_size=settings.embedding_batch_size,
+            show_progress_bar=True,
+            normalize_embeddings=normalize,
+        )
+        return np.array(embeddings, dtype=np.float32)
+
+
+class HuggingFaceAPIProvider:
+    """HuggingFace Inference API — free tier, no local GPU needed."""
+
+    API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction"
+
+    def __init__(self):
+        if not settings.hf_api_key:
+            raise ValueError("REPOMEMORY_HF_API_KEY is required for huggingface embedding provider")
+        self._headers = {"Authorization": f"Bearer {settings.hf_api_key}"}
+        self._model = settings.embedding_model
+
+    def encode(self, texts: list[str], normalize: bool = True) -> np.ndarray:
+        import httpx
+
+        url = f"{self.API_URL}/{self._model}"
+        all_embeddings = []
+        batch_size = 32  # HF API handles batches well
+
+        for i in tqdm(range(0, len(texts), batch_size), desc="HF API embedding"):
+            batch = texts[i : i + batch_size]
+            # Truncate very long texts to avoid API errors
+            batch = [t[:512] for t in batch]
+
+            for attempt in range(3):
+                try:
+                    resp = httpx.post(
+                        url,
+                        json={"inputs": batch, "options": {"wait_for_model": True}},
+                        headers=self._headers,
+                        timeout=60.0,
+                    )
+                    resp.raise_for_status()
+                    embeddings = resp.json()
+                    all_embeddings.extend(embeddings)
+                    break
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 429:
+                        wait = 2 ** attempt * 5
+                        logger.warning("HF rate limited, waiting %ds...", wait)
+                        time.sleep(wait)
+                    elif e.response.status_code == 503:
+                        logger.info("HF model loading, waiting 20s...")
+                        time.sleep(20)
+                    else:
+                        raise
+                except httpx.TimeoutException:
+                    if attempt < 2:
+                        logger.warning("HF API timeout, retrying...")
+                        time.sleep(2)
+                    else:
+                        raise
+
+        result = np.array(all_embeddings, dtype=np.float32)
+
+        if normalize and result.size > 0:
+            norms = np.linalg.norm(result, axis=1, keepdims=True)
+            norms = np.maximum(norms, 1e-12)
+            result = result / norms
+
+        return result
+
+
+# ── Provider factory ──
+
+_provider: EmbeddingProvider | None = None
+
+
+def _get_provider() -> EmbeddingProvider:
+    global _provider
+    if _provider is None:
+        if settings.embedding_provider == "huggingface":
+            _provider = HuggingFaceAPIProvider()
+            logger.info("Using HuggingFace API embedding provider")
+        else:
+            _provider = LocalEmbeddingProvider()
+            logger.info("Using local embedding provider")
+    return _provider
+
+
+# ── Index paths ──
 
 def _get_index_path(repo_id: int) -> Path:
     return settings.get_faiss_index_dir() / f"repo_{repo_id}.faiss"
@@ -35,11 +141,13 @@ def _get_mapping_path(repo_id: int) -> Path:
     return settings.get_faiss_index_dir() / f"repo_{repo_id}_mapping.json"
 
 
+# ── Public API ──
+
 def embed_chunks(repo_id: int) -> int:
     """Generate embeddings for all chunks of a repo and build FAISS index.
     Returns number of embeddings generated.
     """
-    model = _get_model()
+    provider = _get_provider()
 
     with get_session() as session:
         chunks = (
@@ -57,15 +165,9 @@ def embed_chunks(repo_id: int) -> int:
         chunk_ids = [c.id for c in chunks]
         texts = [c.content for c in chunks]
 
-    # Batch encode
+    # Batch encode via provider
     logger.info("Embedding %d chunks...", len(texts))
-    embeddings = model.encode(
-        texts,
-        batch_size=settings.embedding_batch_size,
-        show_progress_bar=True,
-        normalize_embeddings=True,
-    )
-    embeddings = np.array(embeddings, dtype=np.float32)
+    embeddings = provider.encode(texts, normalize=True)
 
     # Build FAISS index (inner product = cosine similarity after normalization)
     dim = embeddings.shape[1]
@@ -111,6 +213,6 @@ def load_faiss_index(repo_id: int) -> tuple[faiss.Index, dict[int, int]] | None:
 
 def encode_query(query: str) -> np.ndarray:
     """Encode a query string to a normalized embedding vector."""
-    model = _get_model()
-    vec = model.encode([query], normalize_embeddings=True)
+    provider = _get_provider()
+    vec = provider.encode([query], normalize=True)
     return np.array(vec, dtype=np.float32)

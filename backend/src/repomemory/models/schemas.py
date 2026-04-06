@@ -8,14 +8,20 @@ from pydantic import BaseModel, Field
 # --- Repository ---
 
 class RepoCreate(BaseModel):
-    path: str
+    url: str | None = None
+    path: str | None = None  # backward compat for local paths
+    branch: str | None = None
+    token: str | None = None  # GitHub personal access token for private repos
 
 
 class RepoResponse(BaseModel):
     id: int
     path: str
     name: str
+    url: str | None = None
+    branch: str | None = None
     status: str
+    error_message: str | None = None
     language_summary: str | None = None
     file_count: int = 0
     symbol_count: int = 0
@@ -126,3 +132,15 @@ class TaskModeResponse(BaseModel):
 
 class ExportFormat(BaseModel):
     format: str = "markdown"  # markdown or json
+
+
+# --- AI Explain ---
+
+class ExplainRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2000)
+    context_pack: dict  # serialized ContextPackResponse
+
+
+class ExplainResponse(BaseModel):
+    summary: str
+    model: str | None = None

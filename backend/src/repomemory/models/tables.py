@@ -15,8 +15,12 @@ class Repository(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     path: Mapped[str] = mapped_column(String(1024), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(256), nullable=False)
+    url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    branch: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    clone_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     language_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="pending")  # pending, indexing, ready, error
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     indexed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 

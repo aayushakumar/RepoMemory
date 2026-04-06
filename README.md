@@ -2,15 +2,15 @@
 
 # RepoMemory
 
-**Local-first code retrieval engine for AI coding workflows**
+**AI-powered code retrieval engine — index any GitHub repo, search with natural language**
 
+[![PyPI](https://img.shields.io/pypi/v/repomemory.svg)](https://pypi.org/project/repomemory/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3572A5.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev)
-[![Vitest](https://img.shields.io/badge/tested_with-vitest-6E9F18.svg)](https://vitest.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-*Index a codebase with one command. Search with natural language. Get token-budget-aware context packs - ready to paste into any LLM.*
+*Point it at any GitHub URL. Get token-budget-aware context packs — ready to paste into any LLM. Free to deploy, free to run.*
 
 </div>
 
@@ -20,20 +20,22 @@
 
 1. [What is RepoMemory?](#what-is-repomemory)
 2. [Features](#features)
-3. [Architecture](#architecture)
-4. [Prerequisites](#prerequisites)
-5. [Installation](#installation)
-6. [Quick Start](#quick-start)
-7. [Running the Servers](#running-the-servers)
-8. [Testing](#testing)
-9. [API Reference](#api-reference)
-10. [Task Modes](#task-modes)
-11. [Configuration](#configuration)
-12. [Project Structure](#project-structure)
-13. [Tech Stack](#tech-stack)
-14. [How It Works - Deep Dive](#how-it-works--deep-dive)
-15. [Benchmark Suite](#benchmark-suite)
-16. [Contributing](#contributing)
+3. [Quick Start](#quick-start)
+4. [Installation](#installation)
+5. [CLI Usage](#cli-usage)
+6. [Python Library](#python-library)
+7. [Web UI & API Server](#web-ui--api-server)
+8. [Architecture](#architecture)
+9. [Deployment](#deployment)
+10. [Testing](#testing)
+11. [API Reference](#api-reference)
+12. [Task Modes](#task-modes)
+13. [Configuration](#configuration)
+14. [Project Structure](#project-structure)
+15. [Tech Stack](#tech-stack)
+16. [How It Works - Deep Dive](#how-it-works--deep-dive)
+17. [Benchmark Suite](#benchmark-suite)
+18. [Contributing](#contributing)
 
 ---
 
@@ -41,12 +43,17 @@
 
 When you ask an LLM to fix a bug or trace a feature, it needs the *right* source files. Pasting the entire codebase wastes the context window. Guessing which files to include misses critical pieces.
 
-RepoMemory solves this with a **hybrid retrieval pipeline**:
+RepoMemory solves this with a **hybrid retrieval pipeline** that works on any public or private GitHub repo:
 
 ```
-"Where is token rotation handled?"
+repomemory index https://github.com/fastapi/fastapi
+repomemory search "Where is dependency injection resolved?"
+```
+
+```
+"Where is dependency injection resolved?"
         ↓
-  Task Classification → bug_fix mode
+  Task Classification → trace_flow mode
         ↓
   BM25 Lexical + FAISS Semantic + Fuzzy Path/Symbol (parallel)
         ↓
@@ -55,9 +62,14 @@ RepoMemory solves this with a **hybrid retrieval pipeline**:
   Token-budget packer (8 000 tokens default)
         ↓
   Context Pack: 3 files, 512 tokens, ready to use
+        ↓
+  (optional) Groq AI summary of results
 ```
 
-Everything runs **locally** - no API keys, no cloud calls, no data leaves your machine.
+**Three ways to use it:**
+- **CLI** — `pip install repomemory` and go
+- **Python library** — `from repomemory import RepoMemory`
+- **Web UI + REST API** — deploy on Render (free tier) or run locally
 
 ---
 
@@ -65,17 +77,197 @@ Everything runs **locally** - no API keys, no cloud calls, no data leaves your m
 
 | Feature | Details |
 |---------|---------|
-| **Hybrid search** | BM25 lexical + FAISS semantic + fuzzy path + symbol name - all fused with RRF |
+| **Index any GitHub repo** | Paste a URL — public or private (with token). Shallow-cloned automatically |
+| **Hybrid search** | BM25 lexical + FAISS semantic + fuzzy path + symbol name — all fused with RRF |
+| **AI-powered explanations** | Optional Groq LLM summarizes why each result matters (free tier) |
+| **CLI + library + web** | `pip install repomemory` for CLI; import as library; or run the full web UI |
 | **Symbol-aware indexing** | tree-sitter extracts functions, classes, methods from Python / JS / TS |
-| **4 Task Modes** | Bug Fix, Trace Flow, Test Lookup, Config Lookup  - auto-detected or manual |
+| **5 Task Modes** | Bug Fix, Trace Flow, Test Lookup, Config Lookup, General — auto-detected or manual |
 | **Token budgets** | Greedy packer respects any token limit (default 8 000, configurable up to 100 000) |
 | **Behavioral memory** | Tracks opened / accepted / thumbs-up actions; frecency score boosts future results |
-| **Relevance explanations** | Every result comes with a human-readable reason: *"High lexical match for 'rotate_token'; semantically similar to query"* |
-| **Export formats** | Copy context pack as Markdown (paste into LLM prompt) or JSON |
+| **Flexible embeddings** | Local sentence-transformers or HuggingFace Inference API (free, no GPU needed) |
 | **Incremental indexing** | SHA-256 hash per file; only changed files are re-embedded |
-| **Benchmark suite** | Recall@k, MRR, NDCG, MAP - run against YAML query sets |
-| **REST API + Swagger UI** | Full OpenAPI docs at `localhost:8000/docs` |
-| **Web UI** | Dark-themed React frontend - search, explore, manage repos, view memory |
+| **Export formats** | Copy context pack as Markdown (paste into LLM prompt) or JSON |
+| **Benchmark suite** | Recall@k, MRR, NDCG, MAP — run against YAML query sets |
+| **Free deployment** | Render (backend) + Vercel (frontend) — all free tier, Docker included |
+
+---
+
+## Quick Start
+
+```bash
+# Install (core + CLI, no GPU needed)
+pip install repomemory
+
+# Index a GitHub repo
+repomemory index https://github.com/pallets/flask
+
+# Search with natural language
+repomemory search "How does request routing work?"
+
+# List indexed repos
+repomemory list
+```
+
+**Want AI-powered summaries?** Set a free Groq API key:
+```bash
+export REPOMEMORY_GROQ_API_KEY=gsk_...    # free at console.groq.com
+repomemory search "How does request routing work?"
+# → Results now include AI-generated explanations
+```
+
+**Private repos?** Pass a GitHub token:
+```bash
+repomemory index https://github.com/myorg/private-repo --token ghp_...
+```
+
+---
+
+## Installation
+
+### As a pip package (recommended)
+
+```bash
+# Core (CLI + library, uses HuggingFace API for embeddings)
+pip install repomemory
+
+# With local embeddings (downloads ~80 MB model, no API key needed)
+pip install "repomemory[local]"
+
+# With web server
+pip install "repomemory[server]"
+
+# With Groq LLM support
+pip install "repomemory[llm]"
+
+# Everything
+pip install "repomemory[all]"
+```
+
+### For development
+
+```bash
+git clone https://github.com/aayushakumar/RepoMemory.git
+cd RepoMemory
+make install         # installs backend[dev] + frontend deps
+```
+
+### Environment variables (optional)
+
+```bash
+export REPOMEMORY_HF_API_KEY=hf_...         # HuggingFace (free) — for API-based embeddings
+export REPOMEMORY_GROQ_API_KEY=gsk_...       # Groq (free) — for AI explanations
+export REPOMEMORY_EMBEDDING_PROVIDER=local   # use local model instead of HF API
+```
+
+---
+
+## CLI Usage
+
+```bash
+# Index a GitHub repo (public)
+repomemory index https://github.com/owner/repo
+
+# Index with a specific branch
+repomemory index https://github.com/owner/repo --branch develop
+
+# Index a private repo
+repomemory index https://github.com/owner/private-repo --token ghp_...
+
+# Index a local directory
+repomemory index /path/to/local/repo
+
+# Search across all repos
+repomemory search "Where is authentication handled?"
+
+# Search a specific repo with custom budget
+repomemory search "token rotation" --repo 1 --top-k 10 --budget 4000
+
+# Force a task mode
+repomemory search "test coverage for auth" --mode test_lookup
+
+# List repos
+repomemory list
+
+# Delete a repo
+repomemory delete 1
+
+# Show config
+repomemory config
+
+# Start the web server
+repomemory serve --port 8000
+```
+
+---
+
+## Python Library
+
+```python
+from repomemory import RepoMemory
+
+rm = RepoMemory()
+
+# Index a repo
+repo = rm.index("https://github.com/pallets/flask")
+
+# Search
+results = rm.search("How does request dispatching work?")
+for file in results.context_pack.files:
+    print(f"{file.path} (score: {file.relevance_score:.2f})")
+    for snippet in file.snippets:
+        print(snippet.content[:200])
+
+# List repos
+repos = rm.list_repos()
+```
+
+---
+
+## Web UI & API Server
+
+**1. Start the API server**
+
+```bash
+pip install "repomemory[server]"
+repomemory serve
+# or: make dev
+```
+
+**2. Start the frontend** (for development)
+
+```bash
+cd frontend && npm install && npm run dev
+# VITE v8 ready → http://localhost:5173
+```
+
+**3. Index a repo** — via the UI or curl:
+
+```bash
+curl -s -X POST http://localhost:8000/api/repos \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://github.com/pallets/flask"}' | python3 -m json.tool
+```
+
+**4. Search**
+
+```bash
+curl -s -X POST http://localhost:8000/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"repo_id": 1, "query": "How does request routing work?", "token_budget": 8000}' \
+  | python3 -m json.tool
+```
+
+### Dev server commands
+
+| Command | Effect |
+|---------|--------|
+| `make dev` | FastAPI backend with hot-reload → `localhost:8000` |
+| `make dev-frontend` | Vite dev server → `localhost:5173` |
+| `make dev-all` | Both at once |
+
+**Swagger UI**: `http://localhost:8000/docs`  
+**ReDoc**: `http://localhost:8000/redoc`
 
 ---
 
@@ -83,7 +275,10 @@ Everything runs **locally** - no API keys, no cloud calls, no data leaves your m
 
 ```mermaid
 flowchart TD
-    Repo[Repository] -->|pathspec + gitignore| Scanner
+    URL[GitHub URL] -->|git clone| Cloner[cloner.py\nshallow clone]
+    Local[Local Path] --> Scanner
+
+    Cloner --> Scanner[scanner.py\npathspec + gitignore]
     Scanner -->|ScannedFile list| Meta[metadata.py]
     Scanner -->|file content| Sym[symbols.py\ntree-sitter]
     Scanner -->|file content| Chunk[chunker.py\nsymbol-aware + sliding window]
@@ -91,7 +286,7 @@ flowchart TD
     Meta --> DB[(SQLite\nfiles · symbols · chunks)]
     Sym  --> DB
     Chunk --> DB
-    Chunk -->|text| Embed[embedder.py\nall-MiniLM-L6-v2]
+    Chunk -->|text| Embed[embedder.py\nLocal or HF API]
     Embed --> FAISS[(FAISS Index\nper-repo .faiss)]
     Embed --> DB
 
@@ -118,118 +313,42 @@ flowchart TD
 
     Combiner -->|RankedResult list| Packer[packer.py\ntoken-budget greedy]
     Packer --> Pack[ContextPack]
-    Pack --> API[FastAPI]
-    API --> UI[React UI\nlocalhost:5173]
+    Pack --> LLM{Groq LLM\nenabled?}
+    LLM -->|yes| Explain[AI Summary]
+    LLM -->|no| Template[Template Explanation]
+    Explain --> API[FastAPI]
+    Template --> API
+    API --> UI[React UI]
+    API --> CLI[CLI]
+    API --> Lib[Python Library]
 ```
 
 ---
 
-## Prerequisites
+## Deployment
 
-| Tool | Version | Install |
-|------|---------|---------|
-| Python | 3.11 or 3.12 | [python.org](https://www.python.org/downloads/) |
-| pip | latest | bundled with Python |
-| Node.js | 18+ | [nodejs.org](https://nodejs.org/) |
-| npm | 9+ | bundled with Node.js |
-
-> No Docker required for development. All data is stored locally in `~/.repomemory/`.
-
----
-
-## Installation
+### Docker
 
 ```bash
-# Clone
-git clone https://github.com/aayushakumar/RepoMemory.git
-cd RepoMemory
-
-# Install both backend and frontend
-make install
+make docker          # build image
+make docker-run      # run with env vars
 ```
 
-Or step by step:
+### Render (free tier)
 
-```bash
-# Backend
-cd backend
-pip install -e ".[dev]"
+1. Fork this repo
+2. Create a new **Web Service** on [Render](https://render.com)
+3. Connect your fork — Render auto-detects the `render.yaml`
+4. Set environment variables:
+   - `REPOMEMORY_HF_API_KEY` — your HuggingFace token (free)
+   - `REPOMEMORY_GROQ_API_KEY` — your Groq token (free, optional)
+5. Deploy — the service uses a 1 GB persistent disk at `/data`
 
-# Frontend
-cd ../frontend
-npm install
-```
+### Vercel (frontend, free tier)
 
-The first `make install` (or `pip install`) will download:
-- `all-MiniLM-L6-v2` sentence-transformer (~80 MB) on first index
-- tree-sitter grammars for Python / JavaScript / TypeScript
-
----
-
-## Quick Start
-
-**1. Start the API server**
-
-```bash
-make dev
-# INFO: Uvicorn running on http://0.0.0.0:8000
-```
-
-**2. Start the frontend**
-
-```bash
-make dev-frontend
-# VITE v8 ready → http://localhost:5173
-```
-
-**3. Index a repository**
-
-Via the UI - go to **Repositories** → enter a path → click **Index Repository**.
-
-Or via `curl`:
-
-```bash
-curl -s -X POST http://localhost:8000/api/repos \
-  -H "Content-Type: application/json" \
-  -d '{"path": "/path/to/your/repo"}' | python3 -m json.tool
-```
-
-Response:
-```json
-{
-  "id": 1,
-  "name": "your-repo",
-  "path": "/path/to/your/repo",
-  "status": "ready",
-  "file_count": 147,
-  "symbol_count": 892,
-  "chunk_count": 1034
-}
-```
-
-**4. Search**
-
-```bash
-curl -s -X POST http://localhost:8000/api/search \
-  -H "Content-Type: application/json" \
-  -d '{"repo_id": 1, "query": "Where is token rotation handled?", "token_budget": 8000}' \
-  | python3 -m json.tool
-```
-
----
-
-## Running the Servers
-
-| Command | Effect |
-|---------|--------|
-| `make dev` | FastAPI backend with hot-reload → `localhost:8000` |
-| `make dev-frontend` | Vite dev server → `localhost:5173` |
-| `make dev-all` | Both at once (background + foreground) |
-
-The Vite dev server proxies all `/api/*` and `/health` requests to `localhost:8000`, so the frontend and backend work together without CORS issues during development.
-
-**Swagger UI**: `http://localhost:8000/docs`  
-**ReDoc**: `http://localhost:8000/redoc`
+1. Import the `frontend/` directory on [Vercel](https://vercel.com)
+2. Set `VITE_API_URL` to your Render backend URL (e.g. `https://repomemory.onrender.com`)
+3. Deploy
 
 ---
 
@@ -251,15 +370,19 @@ cd backend && python -m pytest tests/test_retrieval.py -v
 cd backend && python -m pytest tests/ --cov=repomemory --cov-report=term-missing
 ```
 
-**Backend test suite** - 28 tests across 5 files:
+**Backend test suite**:
 
-| File | Tests | What it covers |
-|------|-------|---------------|
-| `test_scanner.py` | 5 | File walking, gitignore rules, content hashing |
-| `test_symbols.py` | 6 | tree-sitter extraction for Python / JS / TS |
-| `test_retrieval.py` | 7 | Task router, end-to-end search, snippet loading |
-| `test_packer.py` | 4 | Token budget enforcement, Markdown export |
-| `test_metrics.py` | 6 | Recall@k, Precision@k, MRR, MAP, NDCG |
+| File | What it covers |
+|------|---------------|
+| `test_scanner.py` | File walking, gitignore rules, content hashing |
+| `test_symbols.py` | tree-sitter extraction for Python / JS / TS |
+| `test_retrieval.py` | Task router, end-to-end search, snippet loading |
+| `test_packer.py` | Token budget enforcement, Markdown export |
+| `test_metrics.py` | Recall@k, Precision@k, MRR, MAP, NDCG |
+| `test_cloner.py` | Git cloning, URL validation, token security |
+| `test_embedder.py` | Embedding providers (local + HF API) |
+| `test_llm.py` | Groq LLM integration, graceful fallback |
+| `test_cli.py` | CLI commands (index, search, list, config) |
 
 ### Frontend tests (Vitest + Testing Library)
 
@@ -303,11 +426,11 @@ make test-all
 
 | Method | URL | Body | Description |
 |--------|-----|------|-------------|
-| `POST` | `/api/repos` | `{ "path": "/abs/path" }` | Index a new repository |
+| `POST` | `/api/repos` | `{ "url": "https://..." }` or `{ "path": "/abs/path" }` | Index a repository (URL or local) |
 | `GET` | `/api/repos` | - | List all indexed repositories |
 | `GET` | `/api/repos/{id}` | - | Get repository details & stats |
 | `POST` | `/api/repos/{id}/reindex` | - | Force full re-index |
-| `DELETE` | `/api/repos/{id}` | - | Remove from index (DB + FAISS) |
+| `DELETE` | `/api/repos/{id}` | - | Remove from index (DB + FAISS + clone) |
 
 ### Search
 
@@ -315,6 +438,7 @@ make test-all
 |--------|-----|------|-------------|
 | `POST` | `/api/search` | `SearchRequest` | Search + build context pack |
 | `GET` | `/api/search/modes` | - | List task modes with keywords |
+| `POST` | `/api/search/explain` | `ExplainRequest` | AI-powered search summary (requires Groq) |
 
 **SearchRequest schema:**
 ```json
@@ -384,7 +508,7 @@ Valid `action` values: `opened`, `selected`, `accepted`, `dismissed`, `thumbs_up
 ### Health
 
 ```
-GET /health  →  { "status": "ok", "version": "0.1.0" }
+GET /health  →  { "status": "ok", "version": "0.2.0", "llm_enabled": true, "embedding_provider": "huggingface" }
 ```
 
 ---
@@ -423,12 +547,18 @@ export REPOMEMORY_MAX_FILE_SIZE_KB=2000
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `REPOMEMORY_DATA_DIR` | `~/.repomemory` | Root directory for all data |
+| `REPOMEMORY_EMBEDDING_PROVIDER` | `local` | `local` (sentence-transformers) or `huggingface` (API) |
+| `REPOMEMORY_HF_API_KEY` | - | HuggingFace Inference API key (free) |
+| `REPOMEMORY_GROQ_API_KEY` | - | Groq API key for AI explanations (free) |
+| `REPOMEMORY_GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model to use |
 | `REPOMEMORY_EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers model name |
 | `REPOMEMORY_EMBEDDING_DIM` | `384` | Embedding vector dimension (must match model) |
 | `REPOMEMORY_EMBEDDING_BATCH_SIZE` | `64` | Batch size for embedding generation |
 | `REPOMEMORY_MAX_FILE_SIZE_KB` | `500` | Files larger than this are skipped |
 | `REPOMEMORY_TOKEN_BUDGET` | `8000` | Default context pack token budget |
 | `REPOMEMORY_SLIDING_WINDOW_LINES` | `200` | Lines per chunk when no symbols found |
+| `REPOMEMORY_CLONE_TIMEOUT` | `120` | Max seconds for git clone |
+| `REPOMEMORY_MAX_CLONE_SIZE_MB` | `500` | Max repo size in MB |
 | `REPOMEMORY_CORS_ORIGINS` | `["http://localhost:5173", ...]` | Allowed CORS origins |
 
 **Supported file extensions** (indexed by default):
@@ -440,91 +570,93 @@ export REPOMEMORY_MAX_FILE_SIZE_KB=2000
 
 ```
 RepoMemory/
-├── Makefile                         # All dev commands
-├── PRD.md                           # Product Requirements Document
+├── Makefile                         # Dev, Docker, and deploy commands
+├── Dockerfile                       # Multi-stage production build
+├── render.yaml                      # Render IaC deployment config
 ├── README.md
 │
+├── .github/workflows/
+│   ├── ci.yml                       # Lint + test on push/PR
+│   └── publish.yml                  # PyPI publish on release
+│
 ├── backend/
-│   ├── pyproject.toml               # Python project metadata + deps
+│   ├── pyproject.toml               # Package metadata, deps, CLI entry point
 │   ├── src/
 │   │   └── repomemory/
-│   │       ├── config.py            # pydantic-settings Settings class
+│   │       ├── __init__.py          # Public API: RepoMemory class
+│   │       ├── cli.py               # Click CLI: index, search, list, serve
+│   │       ├── config.py            # pydantic-settings (REPOMEMORY_ prefix)
 │   │       ├── models/
-│   │       │   ├── tables.py        # SQLAlchemy ORM (6 tables)
+│   │       │   ├── tables.py        # SQLAlchemy ORM (repos, files, symbols, chunks)
 │   │       │   ├── db.py            # Engine, session factory, init_db()
 │   │       │   └── schemas.py       # Pydantic request/response models
 │   │       ├── indexer/
-│   │       │   ├── scanner.py       # scan_repository() - pathspec + gitignore
-│   │       │   ├── metadata.py      # extract_and_store_metadata()
+│   │       │   ├── cloner.py        # Git clone (shallow, token, branch support)
+│   │       │   ├── scanner.py       # pathspec + gitignore file walker
+│   │       │   ├── metadata.py      # Incremental file metadata
 │   │       │   ├── symbols.py       # tree-sitter → Python / JS / TS symbols
-│   │       │   ├── chunker.py       # symbol-aware + sliding-window chunking
-│   │       │   ├── embedder.py      # sentence-transformers + FAISS per-repo index
-│   │       │   └── orchestrator.py  # index_repository() - full pipeline
+│   │       │   ├── chunker.py       # Symbol-aware + sliding-window chunking
+│   │       │   ├── embedder.py      # Local or HF API embeddings + FAISS
+│   │       │   └── orchestrator.py  # index_repository() full pipeline
 │   │       ├── retrieval/
 │   │       │   ├── lexical.py       # BM25Okapi over chunk content
 │   │       │   ├── semantic.py      # FAISS cosine similarity
 │   │       │   ├── path.py          # rapidfuzz fuzzy path matching
-│   │       │   ├── symbol.py        # fuzzy symbol name search
-│   │       │   ├── combiner.py      # RRF score fusion + RankedResult assembly
-│   │       │   ├── task_router.py   # rule-based query → mode classifier
-│   │       │   └── orchestrator.py  # retrieve() - parallel retrieval entry point
+│   │       │   ├── symbol.py        # Fuzzy symbol name search
+│   │       │   ├── combiner.py      # RRF score fusion
+│   │       │   ├── task_router.py   # Query → mode classifier
+│   │       │   └── orchestrator.py  # retrieve() parallel entry point
 │   │       ├── context/
-│   │       │   ├── packer.py        # build_context_pack() - greedy token budget
-│   │       │   └── explainer.py     # template-based relevance explanations
+│   │       │   ├── packer.py        # Token-budget greedy packer
+│   │       │   ├── explainer.py     # Template + LLM relevance explanations
+│   │       │   └── llm.py           # Groq LLM integration
 │   │       ├── memory/
-│   │       │   └── tracker.py       # record_action(), get_memory_scores() frecency
+│   │       │   └── tracker.py       # Frecency-based behavioral memory
 │   │       ├── evaluation/
-│   │       │   ├── metrics.py       # recall_at_k, mrr, ndcg_at_k, average_precision
-│   │       │   └── benchmark.py     # run_benchmark(), format_benchmark_table()
+│   │       │   ├── metrics.py       # recall, mrr, ndcg, map
+│   │       │   └── benchmark.py     # Benchmark runner
 │   │       └── api/
-│   │           ├── app.py           # create_app() factory + lifespan + CORS
-│   │           ├── routes_index.py  # /api/repos CRUD + indexing
-│   │           ├── routes_search.py # /api/search + /api/search/modes
-│   │           ├── routes_memory.py # /api/actions + /api/memory/{id}
-│   │           └── routes_eval.py   # /api/eval/run + /api/eval/query-sets
-│   ├── tests/
-│   │   ├── conftest.py              # temp SQLite DB fixture
-│   │   ├── test_scanner.py
-│   │   ├── test_symbols.py
-│   │   ├── test_retrieval.py
-│   │   ├── test_packer.py
-│   │   ├── test_metrics.py
-│   │   └── fixtures/
-│   │       └── sample_repo/         # ~10 Python/JS/TS files for tests
-│   └── benchmarks/
-│       ├── queries/
-│       │   └── sample_repo.yaml     # 20 benchmark queries across all modes
-│       └── results/                 # JSON results written here after bench runs
+│   │           ├── app.py           # FastAPI factory + CORS + health
+│   │           ├── routes_index.py  # /api/repos — CRUD + background indexing
+│   │           ├── routes_search.py # /api/search + explain endpoint
+│   │           ├── routes_memory.py # /api/actions + memory stats
+│   │           └── routes_eval.py   # /api/eval benchmarks
+│   └── tests/
+│       ├── conftest.py
+│       ├── test_scanner.py
+│       ├── test_symbols.py
+│       ├── test_retrieval.py
+│       ├── test_packer.py
+│       ├── test_metrics.py
+│       ├── test_cloner.py
+│       ├── test_embedder.py
+│       ├── test_llm.py
+│       ├── test_cli.py
+│       └── fixtures/sample_repo/
 │
 └── frontend/
-    ├── vite.config.ts               # Vite + Tailwind + Vitest config
+    ├── vite.config.ts
+    ├── vercel.json                  # Vercel SPA routing
     ├── package.json
     ├── src/
-    │   ├── main.tsx                 # React entry point
-    │   ├── App.tsx                  # Router + QueryClientProvider
-    │   ├── index.css                # Tailwind v4 @theme dark palette
+    │   ├── main.tsx
+    │   ├── App.tsx
     │   ├── api/
-    │   │   ├── types.ts             # TypeScript interfaces for all API shapes
-    │   │   ├── client.ts            # fetch-based API client
-    │   │   └── hooks.ts             # React Query hooks (useSearch, useRepos, …)
+    │   │   ├── types.ts
+    │   │   ├── client.ts
+    │   │   └── hooks.ts
     │   ├── components/
-    │   │   ├── Layout.tsx           # Sidebar + <Outlet /> wrapper
-    │   │   ├── Sidebar.tsx          # Navigation (Search / Repos / Memory)
-    │   │   ├── ResultCard.tsx       # Collapsible ranked result with score bars
-    │   │   ├── ContextPackView.tsx  # Token budget bar + copy buttons
-    │   │   └── CodeBlock.tsx        # Prism syntax-highlighted code snippet
+    │   │   ├── Layout.tsx
+    │   │   ├── Sidebar.tsx
+    │   │   ├── ResultCard.tsx
+    │   │   ├── ContextPackView.tsx
+    │   │   └── CodeBlock.tsx
     │   ├── pages/
-    │   │   ├── SearchPage.tsx       # Main search UI
-    │   │   ├── ReposPage.tsx        # Repo management
-    │   │   └── MemoryPage.tsx       # Action history + frecency stats
+    │   │   ├── SearchPage.tsx
+    │   │   ├── ReposPage.tsx
+    │   │   └── MemoryPage.tsx
     │   └── test/
-    │       ├── setup.ts             # @testing-library/jest-dom import
-    │       ├── ResultCard.test.tsx
-    │       ├── ContextPackView.test.tsx
-    │       ├── Sidebar.test.tsx
-    │       ├── api.test.ts
-    │       └── markdownExport.test.ts
-    └── dist/                        # Production build output (npm run build)
+    └── dist/
 ```
 
 ---
@@ -533,36 +665,34 @@ RepoMemory/
 
 ### Backend
 
-| Library | Version | Role |
-|---------|---------|------|
-| **FastAPI** | 0.115+ | REST API framework, async, OpenAPI docs |
-| **SQLAlchemy** | 2.0 | ORM with `mapped_column` style; SQLite with WAL |
-| **sentence-transformers** | 3.0+ | Local embedding - `all-MiniLM-L6-v2` (384-dim) |
-| **FAISS** | 1.8+ | Vector similarity search (`IndexFlatIP` after L2 norm) |
-| **tree-sitter** | 0.23+ | Incremental AST parsing for function/class extraction |
-| **rank-bm25** | 0.2+ | Okapi BM25 lexical search over tokenized chunks |
-| **rapidfuzz** | 3.9+ | Fuzzy string matching for path and symbol search |
-| **tiktoken** | 0.7+ | Token counting (cl100k_base - accurate for GPT models) |
-| **pydantic-settings** | 2.0+ | Config from env vars with `REPOMEMORY_` prefix |
-| **pathspec** | 0.12+ | gitignore-compatible file ignore rules |
-| **PyYAML** | 6.0+ | Benchmark query set loading |
-| **pytest** | 9.0+ | Test runner |
+| Library | Role |
+|---------|------|
+| **FastAPI** | REST API framework, async, OpenAPI docs |
+| **SQLAlchemy 2.0** | ORM with `mapped_column` style; SQLite with WAL |
+| **sentence-transformers** | Local embedding — `all-MiniLM-L6-v2` (384-dim) |
+| **HuggingFace Inference API** | Free API-based embeddings (no GPU needed) |
+| **Groq** | Free LLM inference — `llama-3.3-70b-versatile` for AI explanations |
+| **FAISS** | Vector similarity search (`IndexFlatIP` after L2 norm) |
+| **GitPython** | Repository cloning (shallow, branch, token support) |
+| **Click** | CLI framework with Rich output |
+| **tree-sitter** | AST parsing for function/class extraction |
+| **rank-bm25** | Okapi BM25 lexical search |
+| **rapidfuzz** | Fuzzy string matching for path and symbol search |
+| **tiktoken** | Token counting (cl100k_base) |
+| **pydantic-settings** | Config from env vars with `REPOMEMORY_` prefix |
 
 ### Frontend
 
-| Library | Version | Role |
-|---------|---------|------|
-| **React** | 19 | UI framework |
-| **TypeScript** | 5.8+ | Static typing |
-| **Vite** | 8.0 | Dev server (HMR) + production bundler |
-| **TailwindCSS** | 4.0 | Utility CSS with custom dark `@theme` |
-| **@tanstack/react-query** | 5.0+ | Server state, automatic refetch, cache |
-| **react-router-dom** | 7.0+ | Client-side routing |
-| **react-syntax-highlighter** | 16.0+ | Prism syntax highlighting in code blocks |
-| **lucide-react** | 1.7+ | Icon library |
-| **Vitest** | 4.0+ | Unit test runner (Vite-native) |
-| **@testing-library/react** | 16.0+ | DOM testing utilities |
-| **jsdom** | 26.0+ | Browser environment for tests |
+| Library | Role |
+|---------|------|
+| **React 19** | UI framework |
+| **TypeScript 5.8+** | Static typing |
+| **Vite 8** | Dev server (HMR) + production bundler |
+| **TailwindCSS v4** | Utility CSS with custom dark `@theme` |
+| **@tanstack/react-query** | Server state, auto refetch, cache |
+| **react-router-dom** | Client-side routing |
+| **lucide-react** | Icon library |
+| **Vitest** | Unit test runner (Vite-native) |
 
 ---
 
@@ -570,24 +700,19 @@ RepoMemory/
 
 ### 1. Indexing pipeline
 
-`index_repository(repo_id, repo_path)` in `indexer/orchestrator.py` runs 5 stages:
+`index_repository(repo_id, repo_path)` in `indexer/orchestrator.py` runs 5 stages. For URL-based repos, `cloner.py` first performs a shallow git clone before the pipeline starts.
 
-1. **Scan** - `scanner.py` walks the directory tree with `pathlib`, respects `.gitignore` via `pathspec("gitignore")`, filters by extension and file size. Returns a list of `ScannedFile` dataclasses with path, extension, size, and SHA-256 hash of the first 8 KB.
+1. **Clone** (URL repos only) — `cloner.py` runs `git clone --depth 1` with optional branch and token. Enforces a size limit (500 MB default). Private repo tokens are injected into the URL and stripped from any error messages.
 
-2. **Metadata** - `metadata.py` upserts rows into `files` table. Incremental: compares content hashes, skips unchanged files, removes deleted files.
+2. **Scan** — `scanner.py` walks the directory tree with `pathlib`, respects `.gitignore` via `pathspec("gitignore")`, filters by extension and file size. Returns `ScannedFile` dataclasses with path, extension, size, and SHA-256 hash.
 
-3. **Symbol extraction** - `symbols.py` initialises tree-sitter parsers (one per language) and walks the AST to extract:
-   - Python: `function_definition`, `class_definition`, `decorated_definition`
-   - JavaScript / TypeScript: `function_declaration`, `class_declaration`, `method_definition`, `arrow_function`, `import_statement`, `export_statement`
-   - Classes include their methods as children (`parent_symbol_id` FK).
+3. **Metadata** — `metadata.py` upserts rows into `files` table. Incremental: compares content hashes, skips unchanged files, removes deleted files.
 
-4. **Chunking** - `chunker.py` produces `Chunk` records:
-   - If a file has symbols, each function or class body becomes one chunk.
-   - Uncovered regions (between symbols) are chunked if > 10 tokens.
-   - Files without symbols fall back to a sliding window (200 lines, 50-line overlap).
-   - Each chunk's token count is measured with `tiktoken` `cl100k_base`. Chunks > 512 tokens are split further.
+4. **Symbol extraction** — `symbols.py` uses tree-sitter to extract functions, classes, and methods from Python / JS / TS.
 
-5. **Embedding** - `embedder.py` encodes all chunks in batches of 64 with `sentence-transformers`. Vectors are L2-normalised then stored in a per-repo `faiss.IndexFlatIP`. A JSON sidecar maps `faiss_position → chunk_id`.
+5. **Chunking** — `chunker.py` produces symbol-aware chunks. Files with symbols get one chunk per function/class. Files without symbols use a sliding window (200 lines, 50-line overlap).
+
+6. **Embedding** — `embedder.py` encodes chunks via the configured provider (local sentence-transformers or HuggingFace API). Vectors are L2-normalised and stored in a per-repo FAISS `IndexFlatIP`.
 
 ### 2. Retrieval pipeline
 
@@ -607,7 +732,7 @@ RepoMemory/
    ```
    Scores are aggregated per `file_id`. Memory frecency scores (from `tracker.py`) are added to the RRF total. Results are sorted descending.
 
-4. **Context packing** - `packer.py` greedily adds the highest-scoring file's top snippets until the token budget is filled, then calls `explainer.py` to attach human-readable reason strings.
+4. **Context packing** - `packer.py` greedily adds the highest-scoring file's top snippets until the token budget is filled. `explainer.py` attaches relevance reasons — template-based by default, or AI-generated via Groq LLM for the top 3 results when enabled.
 
 ### 3. Memory / Frecency
 

@@ -1,0 +1,27 @@
+# render.yaml — Render Infrastructure as Code
+# https://render.com/docs/infrastructure-as-code
+
+services:
+  - type: web
+    name: repomemory-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    repo: https://github.com/aayushakumar/RepoMemory
+    branch: main
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: REPOMEMORY_GROQ_API_KEY
+        sync: false  # set manually in Render dashboard
+      - key: REPOMEMORY_HF_API_KEY
+        sync: false
+      - key: REPOMEMORY_EMBEDDING_PROVIDER
+        value: huggingface
+      - key: REPOMEMORY_DATA_DIR
+        value: /data/repomemory
+      - key: REPOMEMORY_CORS_ORIGINS
+        value: '["https://repomemory.vercel.app","http://localhost:5173","http://localhost:3000"]'
+    disk:
+      name: repomemory-data
+      mountPath: /data
+      sizeGB: 1

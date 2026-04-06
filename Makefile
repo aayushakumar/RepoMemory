@@ -1,4 +1,4 @@
-.PHONY: install dev dev-frontend dev-all test test-frontend test-all lint index bench clean
+.PHONY: install dev dev-frontend dev-all test test-frontend test-all lint index bench clean docker docker-run
 
 install:
 	cd backend && pip install -e ".[dev]"
@@ -33,13 +33,27 @@ format:
 	cd backend && ruff format src/ tests/
 
 index:
-	@if [ -z "$(REPO)" ]; then echo "Usage: make index REPO=/path/to/repo"; exit 1; fi
+	@if [ -z "$(REPO)" ]; then echo "Usage: make index REPO=<url_or_path>"; exit 1; fi
 	cd backend && python -m repomemory.cli index "$(REPO)"
 
 bench:
 	cd backend && python -m repomemory.evaluation.benchmark
 
+# Docker
+docker:
+	docker build -t repomemory .
+
+docker-run:
+	docker run --rm -p 8000:8000 \
+		-e REPOMEMORY_GROQ_API_KEY=$(REPOMEMORY_GROQ_API_KEY) \
+		-e REPOMEMORY_HF_API_KEY=$(REPOMEMORY_HF_API_KEY) \
+		repomemory
+
+# Frontend production build
+build-frontend:
+	cd frontend && npm run build
+
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf backend/.pytest_cache
+	rm -rf backend/.pytest_cache frontend/dist
