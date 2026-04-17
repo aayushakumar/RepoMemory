@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
 
 import yaml
 
 from repomemory.evaluation.metrics import (
-    recall_at_k,
-    precision_at_k,
-    mrr,
     average_precision,
+    mrr,
     ndcg_at_k,
+    precision_at_k,
+    recall_at_k,
 )
 
 
@@ -69,13 +69,15 @@ def load_query_set(path: str | Path) -> list[QueryCase]:
 
     cases = []
     for item in data.get("queries", []):
-        cases.append(QueryCase(
-            query=item["query"],
-            mode=item.get("mode"),
-            expected_files=item.get("expected_files", []),
-            expected_symbols=item.get("expected_symbols", []),
-            description=item.get("description", ""),
-        ))
+        cases.append(
+            QueryCase(
+                query=item["query"],
+                mode=item.get("mode"),
+                expected_files=item.get("expected_files", []),
+                expected_symbols=item.get("expected_symbols", []),
+                description=item.get("description", ""),
+            )
+        )
     return cases
 
 
@@ -124,7 +126,7 @@ def run_benchmark(
     benchmark = BenchmarkResult(
         name=name,
         repo_path=repo_path,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         query_count=len(results),
         avg_recall_1=sum(r.recall_1 for r in results) / n,
         avg_recall_5=sum(r.recall_5 for r in results) / n,
@@ -152,15 +154,15 @@ def run_benchmark(
 def format_benchmark_table(result: BenchmarkResult) -> str:
     """Format benchmark results as a readable table."""
     lines = [
-        f"\n{'='*70}",
+        f"\n{'=' * 70}",
         f"  Benchmark: {result.name}",
         f"  Repo: {result.repo_path}",
         f"  Queries: {result.query_count}",
         f"  Time: {result.timestamp}",
-        f"{'='*70}",
+        f"{'=' * 70}",
         "",
         f"  {'Metric':<25} {'Score':>10}",
-        f"  {'-'*35}",
+        f"  {'-' * 35}",
         f"  {'Recall@1':<25} {result.avg_recall_1:>10.3f}",
         f"  {'Recall@5':<25} {result.avg_recall_5:>10.3f}",
         f"  {'Recall@10':<25} {result.avg_recall_10:>10.3f}",
@@ -171,14 +173,12 @@ def format_benchmark_table(result: BenchmarkResult) -> str:
         f"  {'Avg Latency (ms)':<25} {result.avg_latency_ms:>10.1f}",
         "",
         f"  {'Query':<40} {'R@5':>6} {'MRR':>6} {'ms':>8}",
-        f"  {'-'*60}",
+        f"  {'-' * 60}",
     ]
 
     for qr in result.query_results:
         q = qr.query[:38] + ".." if len(qr.query) > 40 else qr.query
-        lines.append(
-            f"  {q:<40} {qr.recall_5:>6.2f} {qr.mrr_score:>6.2f} {qr.latency_ms:>8.1f}"
-        )
+        lines.append(f"  {q:<40} {qr.recall_5:>6.2f} {qr.mrr_score:>6.2f} {qr.latency_ms:>8.1f}")
 
-    lines.append(f"\n{'='*70}\n")
+    lines.append(f"\n{'=' * 70}\n")
     return "\n".join(lines)
