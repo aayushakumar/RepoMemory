@@ -10,6 +10,7 @@ const scores = {
   symbol_match: 0.9,
   memory_frecency: 0.2,
   git_recency: 0.1,
+  dependency_graph: 0.3,
 }
 
 const mockResult: RankedResult = {

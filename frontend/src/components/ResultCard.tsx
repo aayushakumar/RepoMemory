@@ -92,6 +92,10 @@ export default function ResultCard({ result, rank }: Props) {
               <span className="text-xs text-text-dim">Memory</span>
               {scoreBar(result.component_scores.memory_frecency, "bg-green/70")}
             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-text-dim">Deps</span>
+              {scoreBar(result.component_scores.dependency_graph, "bg-purple-400")}
+            </div>
           </div>
 
           {/* Explanation */}

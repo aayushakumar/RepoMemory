@@ -46,6 +46,7 @@ export interface ComponentScores {
   symbol_match: number;
   memory_frecency: number;
   git_recency: number;
+  dependency_graph: number;
 }
 
 export interface RankedResult {

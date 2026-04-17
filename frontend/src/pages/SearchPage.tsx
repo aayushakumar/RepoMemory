@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, type FormEvent } from "react";
+import { useState, useCallback, type FormEvent } from "react";
 import {
   Search as SearchIcon,
   Loader2,
@@ -31,23 +31,18 @@ export default function SearchPage() {
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  // auto-select first repo
-  useEffect(() => {
-    if (repos?.length && repoId === 0) {
-      setRepoId(repos[0].id);
-    }
-  }, [repos]);
+  const effectiveRepoId = repoId || repos?.[0]?.id || 0;
 
   const handleSearch = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
-      if (!query.trim() || !repoId) return;
+      if (!query.trim() || !effectiveRepoId) return;
       search.mutate(
-        { repo_id: repoId, query, mode, token_budget: budget },
+        { repo_id: effectiveRepoId, query, mode, token_budget: budget },
         { onSuccess: setResult }
       );
     },
-    [query, repoId, mode, budget, search]
+    [query, effectiveRepoId, mode, budget, search]
   );
 
   return (
@@ -58,7 +53,7 @@ export default function SearchPage() {
           <div className="flex items-center gap-3">
             {/* Repo select */}
             <select
-              value={repoId}
+              value={effectiveRepoId}
               onChange={(e) => setRepoId(Number(e.target.value))}
               className="h-11 px-3 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary font-mono focus:outline-none focus:border-cyan/50 min-w-[140px]"
             >
@@ -99,7 +94,7 @@ export default function SearchPage() {
             {/* Search button */}
             <button
               type="submit"
-              disabled={search.isPending || !query.trim() || !repoId}
+              disabled={search.isPending || !query.trim() || !effectiveRepoId}
               className="h-11 px-5 bg-cyan hover:bg-cyan-dim disabled:opacity-40 text-bg-primary font-bold text-sm rounded-lg flex items-center gap-2 transition-colors"
             >
               {search.isPending ? (

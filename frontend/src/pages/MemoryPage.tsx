@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Brain,
   Trash2,
@@ -12,16 +12,10 @@ import { useRepos, useMemoryStats, useClearMemory } from "../api/hooks";
 export default function MemoryPage() {
   const { data: repos } = useRepos();
   const [repoId, setRepoId] = useState<number>(0);
+  const effectiveRepoId = repoId || repos?.[0]?.id || 0;
   const clearMemory = useClearMemory();
 
-  // auto-select first repo
-  useEffect(() => {
-    if (repos?.length && repoId === 0) {
-      setRepoId(repos[0].id);
-    }
-  }, [repos]);
-
-  const { data: stats, isLoading } = useMemoryStats(repoId);
+  const { data: stats, isLoading } = useMemoryStats(effectiveRepoId);
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
@@ -33,7 +27,7 @@ export default function MemoryPage() {
 
         <div className="flex items-center gap-3">
           <select
-            value={repoId}
+            value={effectiveRepoId}
             onChange={(e) => setRepoId(Number(e.target.value))}
             className="h-9 px-3 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary font-mono focus:outline-none focus:border-cyan/50"
           >
@@ -48,12 +42,12 @@ export default function MemoryPage() {
           <button
             onClick={() => {
               if (
-                repoId &&
+                effectiveRepoId &&
                 confirm("Clear all memory data for this repository?")
               )
-                clearMemory.mutate(repoId);
+                clearMemory.mutate(effectiveRepoId);
             }}
-            disabled={clearMemory.isPending || !repoId}
+            disabled={clearMemory.isPending || !effectiveRepoId}
             className="h-9 px-3 flex items-center gap-2 bg-bg-tertiary hover:bg-red/10 border border-border hover:border-red/30 rounded-lg text-sm text-text-secondary hover:text-red transition-colors disabled:opacity-40"
           >
             <Trash2 className="w-3.5 h-3.5" />
