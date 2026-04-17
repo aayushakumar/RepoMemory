@@ -1,0 +1,25 @@
+rag_queries:
+  - query: "How does token rotation work in the authentication module?"
+    expected_keywords: ["rotate", "token", "TokenManager", "create_token"]
+    expected_files: ["auth/token_handler.py"]
+    description: "Tests understanding of auth token lifecycle"
+
+  - query: "What database operations are available and how is the connection managed?"
+    expected_keywords: ["database", "connection", "session", "query"]
+    expected_files: ["models/database.py"]
+    description: "Tests understanding of database layer"
+
+  - query: "How are API routes organized and what endpoints exist?"
+    expected_keywords: ["route", "endpoint", "api", "handler"]
+    expected_files: ["routes/api.py"]
+    description: "Tests understanding of API structure"
+
+  - query: "What configuration settings are available and where are they defined?"
+    expected_keywords: ["config", "settings", "environment"]
+    expected_files: ["config/settings.py"]
+    description: "Tests understanding of configuration"
+
+  - query: "How does the test suite verify authentication functionality?"
+    expected_keywords: ["test", "auth", "assert", "token"]
+    expected_files: ["tests/test_auth.py"]
+    description: "Tests understanding of test structure"

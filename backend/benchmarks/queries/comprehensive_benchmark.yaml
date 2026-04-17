@@ -1,0 +1,265 @@
+# Extended benchmark queries for comprehensive evaluation
+# Covers all 5 task modes with ground-truth files from sample_repo fixture
+
+queries:
+  # ---- Bug Fix Mode (10 queries) ----
+  - query: "bug in token validation - TypeError when token is expired"
+    mode: bug_fix
+    expected_files:
+      - "auth/token_handler.py"
+      - "tests/test_auth.py"
+    description: "Should find token handling code and related tests"
+
+  - query: "error in password hashing function"
+    mode: bug_fix
+    expected_files:
+      - "auth/token_handler.py"
+    description: "Should find hash_password and verify_password functions"
+
+  - query: "database connection crash on insert"
+    mode: bug_fix
+    expected_files:
+      - "models/database.py"
+    description: "Should find Database class with CRUD operations"
+
+  - query: "NoneType error when session is expired"
+    mode: bug_fix
+    expected_files:
+      - "auth/session.py"
+    description: "Session management handles expiry"
+
+  - query: "fix fetchWrapper throwing on 401 responses"
+    mode: bug_fix
+    expected_files:
+      - "services/api_client.ts"
+    description: "TS client handles HTTP error codes"
+
+  - query: "broken helper function for date parsing"
+    mode: bug_fix
+    expected_files:
+      - "utils/helpers.js"
+    description: "Utility helpers module"
+
+  - query: "regression in API route registration"
+    mode: bug_fix
+    expected_files:
+      - "routes/api.py"
+    description: "Route definitions"
+
+  - query: "fix broken test assertion in auth tests"
+    mode: bug_fix
+    expected_files:
+      - "tests/test_auth.py"
+    description: "Auth test file"
+
+  - query: "crash in route handler test setup"
+    mode: bug_fix
+    expected_files:
+      - "tests/test_routes.py"
+    description: "Route tests"
+
+  - query: "settings not loading environment variables correctly"
+    mode: bug_fix
+    expected_files:
+      - "config/settings.py"
+    description: "Config module"
+
+  # ---- Trace Flow Mode (8 queries) ----
+  - query: "trace the login flow from route to auth"
+    mode: trace_flow
+    expected_files:
+      - "routes/api.py"
+      - "auth/token_handler.py"
+      - "auth/session.py"
+    description: "Should trace login through route handler to auth modules"
+
+  - query: "how does user registration work end to end"
+    mode: trace_flow
+    expected_files:
+      - "routes/api.py"
+      - "models/database.py"
+    description: "Trace registration from API route to database"
+
+  - query: "how does the API client make authenticated requests"
+    mode: trace_flow
+    expected_files:
+      - "services/api_client.ts"
+    description: "TypeScript API client with auth headers"
+
+  - query: "trace the path of a database query from API to storage"
+    mode: trace_flow
+    expected_files:
+      - "routes/api.py"
+      - "models/database.py"
+    description: "API to database flow"
+
+  - query: "how does session creation and validation flow"
+    mode: trace_flow
+    expected_files:
+      - "auth/session.py"
+      - "auth/token_handler.py"
+    description: "Session lifecycle"
+
+  - query: "trace the token refresh pipeline"
+    mode: trace_flow
+    expected_files:
+      - "auth/token_handler.py"
+      - "auth/session.py"
+    description: "Token refresh flow"
+
+  - query: "how does the test infrastructure set up fixtures"
+    mode: trace_flow
+    expected_files:
+      - "tests/test_auth.py"
+      - "tests/test_routes.py"
+    description: "Test setup patterns"
+
+  - query: "how does error handling flow from routes to client"
+    mode: trace_flow
+    expected_files:
+      - "routes/api.py"
+      - "services/api_client.ts"
+    description: "Error propagation path"
+
+  # ---- Test Lookup Mode (6 queries) ----
+  - query: "find tests for authentication"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_auth.py"
+    description: "Auth test file"
+
+  - query: "unit tests for the API routes"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_routes.py"
+    description: "Route tests"
+
+  - query: "test coverage for token rotation feature"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_auth.py"
+      - "auth/token_handler.py"
+    description: "Token tests and implementation"
+
+  - query: "find all test assertions for database operations"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_routes.py"
+      - "models/database.py"
+    description: "Database tests"
+
+  - query: "how is the session module unit tested"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_auth.py"
+    description: "Session tests likely in auth tests"
+
+  - query: "test mock patterns in the codebase"
+    mode: test_lookup
+    expected_files:
+      - "tests/test_auth.py"
+      - "tests/test_routes.py"
+    description: "Mock usage across tests"
+
+  # ---- Config Lookup Mode (6 queries) ----
+  - query: "where is the JWT expiry config setting"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "JWT configuration"
+
+  - query: "find all environment variable definitions"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "Env var definitions"
+
+  - query: "what database configuration parameters exist"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+      - "models/database.py"
+    description: "Database config"
+
+  - query: "API base URL constant"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+      - "services/api_client.ts"
+    description: "API URL config"
+
+  - query: "token expiry timeout setting"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "Token timeout config"
+
+  - query: "where are the application settings loaded from"
+    mode: config_lookup
+    expected_files:
+      - "config/settings.py"
+    description: "Settings loading"
+
+  # ---- General Mode (10 queries) ----
+  - query: "explain user authentication logic"
+    mode: general
+    expected_files:
+      - "auth/token_handler.py"
+      - "auth/session.py"
+    description: "Auth module overview"
+
+  - query: "show me the database model implementation"
+    mode: general
+    expected_files:
+      - "models/database.py"
+    description: "Database model"
+
+  - query: "what does the API client look like"
+    mode: general
+    expected_files:
+      - "services/api_client.ts"
+    description: "API client code"
+
+  - query: "utility helper functions"
+    mode: general
+    expected_files:
+      - "utils/helpers.js"
+    description: "Helper utilities"
+
+  - query: "project README overview"
+    mode: general
+    expected_files:
+      - "README.md"
+    description: "README file"
+
+  - query: "session management implementation"
+    mode: general
+    expected_files:
+      - "auth/session.py"
+    description: "Session module"
+
+  - query: "how are API endpoints organized"
+    mode: general
+    expected_files:
+      - "routes/api.py"
+    description: "Route organization"
+
+  - query: "password security implementation"
+    mode: general
+    expected_files:
+      - "auth/token_handler.py"
+    description: "Password handling in token_handler"
+
+  - query: "all Python files in the auth module"
+    mode: general
+    expected_files:
+      - "auth/token_handler.py"
+      - "auth/session.py"
+    description: "Auth module files"
+
+  - query: "TypeScript and JavaScript code in the project"
+    mode: general
+    expected_files:
+      - "services/api_client.ts"
+      - "utils/helpers.js"
+    description: "Non-Python files"
