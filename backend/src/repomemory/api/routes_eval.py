@@ -16,12 +16,12 @@ class BenchmarkRequest(BaseModel):
 @router.post("/eval/run")
 async def run_evaluation(req: BenchmarkRequest):
     """Run a benchmark suite against an indexed repository."""
+    from repomemory.evaluation.benchmark import (
+        format_benchmark_table,
+        run_benchmark,
+    )
     from repomemory.models.db import get_session
     from repomemory.models.tables import Repository
-    from repomemory.evaluation.benchmark import (
-        run_benchmark,
-        format_benchmark_table,
-    )
 
     with get_session() as session:
         repo = session.get(Repository, req.repo_id)
@@ -81,3 +81,55 @@ async def list_query_sets():
     if not base.exists():
         return []
     return [p.stem for p in base.glob("*.yaml")]
+
+
+class RAGEvalRequest(BaseModel):
+    repo_id: int
+    query_set: str = "rag_evaluation"
+
+
+@router.post("/eval/rag")
+async def run_rag_evaluation(req: RAGEvalRequest):
+    """Run RAG quality evaluation — measure how retrieval quality impacts LLM answer quality."""
+    from repomemory.evaluation.rag_evaluator import evaluate_rag_quality
+    from repomemory.models.db import get_session
+    from repomemory.models.tables import Repository
+
+    with get_session() as session:
+        repo = session.get(Repository, req.repo_id)
+        if not repo:
+            raise HTTPException(404, "Repository not found")
+
+    base = Path(__file__).resolve().parent.parent.parent.parent / "benchmarks" / "queries"
+    query_file = base / f"{req.query_set}.yaml"
+    if not query_file.exists():
+        raise HTTPException(404, f"RAG query set '{req.query_set}' not found")
+
+    result = evaluate_rag_quality(
+        repo_id=req.repo_id,
+        query_set_path=str(query_file),
+        name=req.query_set,
+    )
+
+    return {
+        "name": result.name,
+        "query_count": result.query_count,
+        "avg_relevance": round(result.avg_relevance, 2),
+        "avg_completeness": round(result.avg_completeness, 2),
+        "avg_faithfulness": round(result.avg_faithfulness, 2),
+        "avg_keyword_recall": round(result.avg_keyword_recall, 3),
+        "avg_latency_ms": round(result.avg_latency_ms, 1),
+        "query_results": [
+            {
+                "query": qr.query,
+                "retrieved_files": qr.retrieved_files[:5],
+                "context_tokens": qr.context_tokens,
+                "answer": (qr.answer[:500] if qr.answer else None),
+                "relevance": round(qr.relevance_score, 2),
+                "completeness": round(qr.completeness_score, 2),
+                "faithfulness": round(qr.faithfulness_score, 2),
+                "keyword_recall": round(qr.keyword_recall, 3),
+            }
+            for qr in result.query_results
+        ],
+    }

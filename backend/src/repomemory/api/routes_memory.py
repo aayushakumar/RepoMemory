@@ -1,6 +1,7 @@
 """Memory and user action routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+
 from repomemory.models.schemas import ActionRequest, MemoryStatsResponse
 
 router = APIRouter()

@@ -84,7 +84,4 @@ async def list_modes():
     """List available task modes with descriptions."""
     from repomemory.retrieval.task_router import TASK_MODES
 
-    return [
-        TaskModeResponse(name=m.name, description=m.description, keywords=m.keywords)
-        for m in TASK_MODES.values()
-    ]
+    return [TaskModeResponse(name=m.name, description=m.description, keywords=m.keywords) for m in TASK_MODES.values()]
