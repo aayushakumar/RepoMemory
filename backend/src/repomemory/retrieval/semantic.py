@@ -2,8 +2,6 @@
 
 import logging
 
-import numpy as np
-
 from repomemory.indexer.embedder import encode_query, load_faiss_index
 
 logger = logging.getLogger(__name__)

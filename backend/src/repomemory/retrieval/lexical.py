@@ -19,13 +19,7 @@ def _tokenize(text: str) -> list[str]:
 
 def _build_bm25_index(repo_id: int) -> tuple[BM25Okapi, list[int]]:
     with get_session() as session:
-        chunks = (
-            session.query(Chunk)
-            .join(Chunk.file)
-            .filter(File.repo_id == repo_id)
-            .order_by(Chunk.id)
-            .all()
-        )
+        chunks = session.query(Chunk).join(Chunk.file).filter(File.repo_id == repo_id).order_by(Chunk.id).all()
         chunk_ids = [c.id for c in chunks]
         corpus = [_tokenize(c.content) for c in chunks]
 

@@ -4,7 +4,7 @@ import logging
 from dataclasses import dataclass, field
 
 from repomemory.models.db import get_session
-from repomemory.models.tables import Chunk, File, Symbol
+from repomemory.models.tables import Chunk, File
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ def combine_results(
     repo_id: int,
     top_k: int = 20,
     method: str = "rrf",
+    graph_scores: dict[int, float] | None = None,  # file_id -> dependency graph score
 ) -> list[RankedResult]:
     """Combine results from multiple retrievers into a single ranked list."""
 
@@ -86,6 +87,7 @@ def combine_results(
                 "symbol_match": 0.0,
                 "memory_frecency": 0.0,
                 "git_recency": 0.0,
+                "dependency_graph": 0.0,
             }
 
     if method == "rrf":
@@ -143,15 +145,19 @@ def combine_results(
     for fid in file_scores:
         file_scores[fid]["memory_frecency"] = memory_scores.get(fid, 0.0)
 
+    # Add dependency graph scores
+    if graph_scores:
+        for fid, gscore in graph_scores.items():
+            _ensure_file(fid)
+            file_scores[fid]["dependency_graph"] = gscore
+
     # Compute combined scores
     results: list[RankedResult] = []
     for fid, scores_dict in file_scores.items():
         combined = sum(weights.get(k, 0.0) * v for k, v in scores_dict.items())
 
         # Collect chunk_ids for this file
-        file_chunk_ids = [
-            cid for cid, _ in lexical_results if chunk_to_file.get(cid) == fid
-        ] + [
+        file_chunk_ids = [cid for cid, _ in lexical_results if chunk_to_file.get(cid) == fid] + [
             cid for cid, _ in semantic_results if chunk_to_file.get(cid) == fid
         ]
         file_chunk_ids = list(set(file_chunk_ids))
@@ -159,14 +165,16 @@ def combine_results(
         # Collect symbol_ids
         file_symbol_ids = [sid for sid, sfid, _ in symbol_results if sfid == fid]
 
-        results.append(RankedResult(
-            file_id=fid,
-            file_path=file_paths.get(fid, ""),
-            chunk_ids=file_chunk_ids,
-            symbol_ids=file_symbol_ids,
-            combined_score=round(combined, 4),
-            component_scores=scores_dict,
-        ))
+        results.append(
+            RankedResult(
+                file_id=fid,
+                file_path=file_paths.get(fid, ""),
+                chunk_ids=file_chunk_ids,
+                symbol_ids=file_symbol_ids,
+                combined_score=round(combined, 4),
+                component_scores=scores_dict,
+            )
+        )
 
     results.sort(key=lambda r: -r.combined_score)
     return results[:top_k]

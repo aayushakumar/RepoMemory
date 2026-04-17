@@ -4,13 +4,15 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from repomemory.retrieval.lexical import lexical_search
-from repomemory.retrieval.semantic import semantic_search
-from repomemory.retrieval.path import path_search
-from repomemory.retrieval.symbol import symbol_search
-from repomemory.retrieval.combiner import RankedResult, combine_results
-from repomemory.retrieval.task_router import classify_task, get_weights
 from repomemory.memory.tracker import get_memory_scores
+from repomemory.retrieval.combiner import RankedResult, combine_results
+from repomemory.retrieval.graph import graph_search
+from repomemory.retrieval.lexical import lexical_search
+from repomemory.retrieval.path import path_search
+from repomemory.retrieval.semantic import semantic_search
+from repomemory.retrieval.symbol import symbol_search
+from repomemory.retrieval.task_router import classify_task
+from repomemory.retrieval.weight_learner import get_adaptive_weights
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,8 @@ def retrieve(
 
     # Classify task mode
     classified_mode = mode if mode and mode != "auto" else classify_task(query)
-    weights = get_weights(classified_mode)
+    # Use adaptive weights (learned if available, else static + dependency_graph)
+    weights = get_adaptive_weights(repo_id, classified_mode)
 
     # Run retrievers in parallel
     with ThreadPoolExecutor(max_workers=4) as executor:
@@ -50,7 +53,23 @@ def retrieve(
     # Collect file_ids from results (will be resolved in combine_results)
     memory_scores = get_memory_scores(repo_id, list(all_file_ids))
 
-    # Combine
+    # First pass: combine without graph to identify seed files
+    ranked_initial = combine_results(
+        lexical_results=lexical_results,
+        semantic_results=semantic_results,
+        path_results=path_results,
+        symbol_results=symbol_results,
+        memory_scores=memory_scores,
+        weights=weights,
+        repo_id=repo_id,
+        top_k=top_k,
+    )
+
+    # Graph search: boost files connected to top results via dependency graph
+    seed_file_ids = {r.file_id for r in ranked_initial[:5]}
+    graph_scores = graph_search(seed_file_ids, repo_id, max_hops=2)
+
+    # Final combine with graph scores
     ranked = combine_results(
         lexical_results=lexical_results,
         semantic_results=semantic_results,
@@ -60,6 +79,7 @@ def retrieve(
         weights=weights,
         repo_id=repo_id,
         top_k=top_k,
+        graph_scores=graph_scores,
     )
 
     # Generate explanations and load snippets
@@ -99,12 +119,14 @@ def _load_snippets(ranked: list[RankedResult]) -> list[RankedResult]:
         for cid in r.chunk_ids[:3]:
             c = chunk_map.get(cid)
             if c:
-                r.snippets.append({
-                    "content": c.content,
-                    "start_line": c.start_line,
-                    "end_line": c.end_line,
-                    "symbol_name": None,
-                    "token_count": c.token_count,
-                })
+                r.snippets.append(
+                    {
+                        "content": c.content,
+                        "start_line": c.start_line,
+                        "end_line": c.end_line,
+                        "symbol_name": None,
+                        "token_count": c.token_count,
+                    }
+                )
 
     return ranked

@@ -6,7 +6,7 @@ import re
 from rapidfuzz import fuzz
 
 from repomemory.models.db import get_session
-from repomemory.models.tables import Symbol, File
+from repomemory.models.tables import File, Symbol
 
 logger = logging.getLogger(__name__)
 
