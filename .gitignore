@@ -39,3 +39,8 @@ Thumbs.db
 # Env
 .env
 .env.local
+
+# Private / unpublished writing
+docs/
+extra.txt
+
