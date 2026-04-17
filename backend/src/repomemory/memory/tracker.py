@@ -1,12 +1,12 @@
 """User action tracking and frecency scoring."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func as sqlfunc
 
 from repomemory.models.db import get_session
-from repomemory.models.tables import Query, UserAction, File
+from repomemory.models.tables import File, Query, UserAction
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def record_action(
     target_id: int,
     action_type: str,
 ) -> None:
-    """Record a user action."""
+    """Record a user action and trigger adaptive weight learning."""
     if action_type not in ACTION_WEIGHTS:
         logger.warning("Unknown action type: %s", action_type)
         return
@@ -51,6 +51,33 @@ def record_action(
         session.add(action)
         session.commit()
 
+        # Trigger adaptive weight learning
+        query = session.get(Query, query_id)
+        if query:
+            _trigger_weight_update(query.repo_id, query.mode, action_type)
+
+
+def _trigger_weight_update(repo_id: int, mode: str, action_type: str) -> None:
+    """Trigger adaptive weight learning after a user action."""
+    try:
+        from repomemory.retrieval.weight_learner import update_weights
+
+        # Use uniform component scores as fallback since we don't have
+        # the specific result's scores here. The weight learner handles
+        # this by treating all signals equally for this update.
+        uniform_scores = {
+            "lexical": 0.15,
+            "semantic": 0.15,
+            "path_match": 0.15,
+            "symbol_match": 0.15,
+            "memory_frecency": 0.15,
+            "git_recency": 0.1,
+            "dependency_graph": 0.15,
+        }
+        update_weights(repo_id, mode, uniform_scores, action_type)
+    except Exception as e:
+        logger.debug("Weight update failed (non-critical): %s", e)
+
 
 def get_memory_scores(
     repo_id: int,
@@ -62,7 +89,7 @@ def get_memory_scores(
     if not file_ids:
         return {}
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     with get_session() as session:
         actions = (
@@ -78,7 +105,7 @@ def get_memory_scores(
         for action in actions:
             fid = action.target_id
             weight = ACTION_WEIGHTS.get(action.action, 0.0)
-            days_since = (now - action.timestamp.replace(tzinfo=timezone.utc)).total_seconds() / 86400
+            days_since = (now - action.timestamp.replace(tzinfo=UTC)).total_seconds() / 86400
             decay = 1.0 / (1.0 + days_since * 0.1)
             scores[fid] = scores.get(fid, 0.0) + weight * decay
 
@@ -94,12 +121,7 @@ def get_memory_stats(repo_id: int) -> dict:
     """Get memory statistics for a repository."""
     with get_session() as session:
         total_queries = session.query(Query).filter(Query.repo_id == repo_id).count()
-        total_actions = (
-            session.query(UserAction)
-            .join(UserAction.query)
-            .filter(Query.repo_id == repo_id)
-            .count()
-        )
+        total_actions = session.query(UserAction).join(UserAction.query).filter(Query.repo_id == repo_id).count()
 
         # Top files by action count
         top_files_data = (
@@ -119,23 +141,18 @@ def get_memory_stats(repo_id: int) -> dict:
         top_files = []
         for fid, count in top_files_data:
             f = session.get(File, fid)
-            top_files.append({
-                "file_id": fid,
-                "path": f.path if f else "unknown",
-                "action_count": count,
-            })
+            top_files.append(
+                {
+                    "file_id": fid,
+                    "path": f.path if f else "unknown",
+                    "action_count": count,
+                }
+            )
 
         # Recent queries
-        recent = (
-            session.query(Query)
-            .filter(Query.repo_id == repo_id)
-            .order_by(Query.timestamp.desc())
-            .limit(20)
-            .all()
-        )
+        recent = session.query(Query).filter(Query.repo_id == repo_id).order_by(Query.timestamp.desc()).limit(20).all()
         recent_queries = [
-            {"query_id": q.id, "text": q.text, "mode": q.mode, "timestamp": q.timestamp.isoformat()}
-            for q in recent
+            {"query_id": q.id, "text": q.text, "mode": q.mode, "timestamp": q.timestamp.isoformat()} for q in recent
         ]
 
     return {

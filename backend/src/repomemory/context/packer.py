@@ -34,22 +34,26 @@ def build_context_pack(
             if total_tokens + file_tokens + snippet_tokens > budget:
                 continue
 
-            file_snippets.append(SnippetResponse(
-                content=snippet_data["content"],
-                start_line=snippet_data["start_line"],
-                end_line=snippet_data["end_line"],
-                symbol_name=snippet_data.get("symbol_name"),
-                token_count=snippet_tokens,
-            ))
+            file_snippets.append(
+                SnippetResponse(
+                    content=snippet_data["content"],
+                    start_line=snippet_data["start_line"],
+                    end_line=snippet_data["end_line"],
+                    symbol_name=snippet_data.get("symbol_name"),
+                    token_count=snippet_tokens,
+                )
+            )
             file_tokens += snippet_tokens
 
         if file_snippets:
-            files.append(ContextFileResponse(
-                path=result.file_path,
-                relevance_score=result.combined_score,
-                reason=result.explanation,
-                snippets=file_snippets,
-            ))
+            files.append(
+                ContextFileResponse(
+                    path=result.file_path,
+                    relevance_score=result.combined_score,
+                    reason=result.explanation,
+                    snippets=file_snippets,
+                )
+            )
             total_tokens += file_tokens
 
     budget_used_pct = round(total_tokens / budget * 100, 1) if budget > 0 else 0.0
@@ -67,7 +71,7 @@ def build_context_pack(
 def export_as_markdown(pack: ContextPackResponse) -> str:
     """Export context pack as formatted Markdown for LLM prompts."""
     lines = [
-        f"## Context Pack: \"{pack.query}\"",
+        f'## Context Pack: "{pack.query}"',
         f"Mode: {pack.mode} | Budget: {pack.total_tokens:,}/{pack.budget:,} tokens",
         "",
     ]

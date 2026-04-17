@@ -82,7 +82,7 @@ def summarize_context(query: str, context_files: list[dict]) -> str | None:
     files_text = "\n\n".join(file_summaries)
 
     prompt = (
-        f"You are a code analysis assistant. A developer searched for: \"{query}\"\n\n"
+        f'You are a code analysis assistant. A developer searched for: "{query}"\n\n'
         f"The following relevant files were found:\n\n{files_text}\n\n"
         f"Provide a concise summary (3-5 sentences) explaining how these files relate "
         f"to the query and what the developer should look at first."

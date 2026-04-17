@@ -13,6 +13,7 @@ SCORE_THRESHOLDS = {
     "symbol_match": 0.005,
     "memory_frecency": 0.005,
     "git_recency": 0.005,
+    "dependency_graph": 0.005,
 }
 
 EXPLANATION_TEMPLATES = {
@@ -22,6 +23,7 @@ EXPLANATION_TEMPLATES = {
     "symbol_match": "Contains symbols matching query",
     "memory_frecency": "Frequently accessed for similar queries",
     "git_recency": "Recently modified",
+    "dependency_graph": "Connected via import dependency graph",
 }
 
 

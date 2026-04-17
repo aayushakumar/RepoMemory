@@ -105,7 +105,7 @@ def index(source: str, branch: str | None, token: str | None):
     with console.status("[bold green]Running indexing pipeline..."):
         stats = index_repository(repo_id, repo_path)
 
-    console.print(f"\n[green]✓ Indexed successfully![/green]")
+    console.print("\n[green]✓ Indexed successfully![/green]")
     console.print(f"  Files: {stats.files_indexed}")
     console.print(f"  Symbols: {stats.symbols_extracted}")
     console.print(f"  Chunks: {stats.chunks_created}")
@@ -175,7 +175,8 @@ def search(query: str, repo: str | None, mode: str | None, top_k: int, budget: i
     console.print(table)
 
     # Context summary
-    console.print(f"\n[dim]Context pack: {context.total_tokens} tokens ({context.budget_used_pct:.0f}% of {budget} budget)[/dim]")
+    pct = f"{context.budget_used_pct:.0f}%"
+    console.print(f"\n[dim]Context pack: {context.total_tokens} tokens ({pct} of {budget} budget)[/dim]")
 
 
 @main.command("list")

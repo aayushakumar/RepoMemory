@@ -57,9 +57,7 @@ class RepoMemory:
                 if existing:
                     repo_id = existing.id
                 else:
-                    repo = Repository(
-                        path=source, name=repo_name, url=source, branch=branch, status="indexing"
-                    )
+                    repo = Repository(path=source, name=repo_name, url=source, branch=branch, status="indexing")
                     session.add(repo)
                     session.commit()
                     session.refresh(repo)
@@ -77,17 +75,13 @@ class RepoMemory:
                 raise FileNotFoundError(f"Directory not found: {source}")
 
             with get_session() as session:
-                existing = session.query(Repository).filter(
-                    Repository.path == str(local_path)
-                ).first()
+                existing = session.query(Repository).filter(Repository.path == str(local_path)).first()
                 if existing and not force:
                     return {"repo_id": existing.id, "status": existing.status, "skipped": True}
                 if existing:
                     repo_id = existing.id
                 else:
-                    repo = Repository(
-                        path=str(local_path), name=local_path.name, status="indexing"
-                    )
+                    repo = Repository(path=str(local_path), name=local_path.name, status="indexing")
                     session.add(repo)
                     session.commit()
                     session.refresh(repo)
