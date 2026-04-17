@@ -1,5 +1,3 @@
-<div align="center">
-
 # RepoMemory
 
 **AI-powered code retrieval engine — index any GitHub repo, search with natural language**
@@ -12,11 +10,10 @@
 
 *Point it at any GitHub URL. Get token-budget-aware context packs — ready to paste into any LLM. Free to run, free to deploy.*
 
-</div>
-
 ---
 
 ## What is RepoMemory?
+
 
 When you ask an LLM to fix a bug or trace a feature, it needs the *right* source files. Pasting the whole codebase wastes the context window. Guessing which files to include misses critical pieces.
 
