@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def _count_lines(filepath: Path) -> int:
     try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+        with open(filepath, encoding="utf-8", errors="replace") as f:
             return sum(1 for _ in f)
     except OSError:
         return 0
@@ -27,10 +27,7 @@ def extract_and_store_metadata(
 
     with get_session() as session:
         # Get existing files for this repo (for incremental indexing)
-        existing = {
-            f.path: f
-            for f in session.query(File).filter(File.repo_id == repo_id).all()
-        }
+        existing = {f.path: f for f in session.query(File).filter(File.repo_id == repo_id).all()}
 
         new_count = 0
         updated_count = 0

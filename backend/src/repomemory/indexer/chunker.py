@@ -27,7 +27,7 @@ def count_tokens(text: str) -> int:
 
 def _read_file_lines(filepath: Path) -> list[str] | None:
     try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+        with open(filepath, encoding="utf-8", errors="replace") as f:
             return f.readlines()
     except OSError:
         return None
@@ -65,14 +65,16 @@ def _make_chunks_from_symbols(
             )
             chunks.extend(sub_chunks)
         else:
-            chunks.append({
-                "file_id": file_id,
-                "symbol_id": sym.id,
-                "content": content,
-                "start_line": sym.start_line,
-                "end_line": sym.end_line,
-                "token_count": tokens,
-            })
+            chunks.append(
+                {
+                    "file_id": file_id,
+                    "symbol_id": sym.id,
+                    "content": content,
+                    "start_line": sym.start_line,
+                    "end_line": sym.end_line,
+                    "token_count": tokens,
+                }
+            )
 
         for i in range(start, end):
             covered_lines.add(i)
@@ -105,14 +107,16 @@ def _sliding_window_chunk(
             content = "".join(lines[i:end])
             tokens = count_tokens(content)
 
-        chunks.append({
-            "file_id": file_id,
-            "symbol_id": symbol_id,
-            "content": content,
-            "start_line": offset + i + 1,
-            "end_line": offset + end,
-            "token_count": tokens,
-        })
+        chunks.append(
+            {
+                "file_id": file_id,
+                "symbol_id": symbol_id,
+                "content": content,
+                "start_line": offset + i + 1,
+                "end_line": offset + end,
+                "token_count": tokens,
+            }
+        )
 
         step = max(end - i - overlap, 1)
         i += step
@@ -136,9 +140,7 @@ def chunk_file(
     # Symbol-aware chunking if symbols exist
     non_import_symbols = [s for s in symbols if s.kind != "import"]
     if non_import_symbols:
-        sym_chunks, covered = _make_chunks_from_symbols(
-            lines, non_import_symbols, db_file.id, max_tokens
-        )
+        sym_chunks, covered = _make_chunks_from_symbols(lines, non_import_symbols, db_file.id, max_tokens)
         chunks.extend(sym_chunks)
 
         # Chunk uncovered regions
@@ -154,19 +156,26 @@ def chunk_file(
                     tokens = count_tokens(content)
                     if tokens > 10:  # skip trivial regions
                         if tokens > max_tokens:
-                            chunks.extend(_sliding_window_chunk(
-                                region, db_file.id, None, offset=uncovered_start,
-                                max_tokens=max_tokens,
-                            ))
+                            chunks.extend(
+                                _sliding_window_chunk(
+                                    region,
+                                    db_file.id,
+                                    None,
+                                    offset=uncovered_start,
+                                    max_tokens=max_tokens,
+                                )
+                            )
                         else:
-                            chunks.append({
-                                "file_id": db_file.id,
-                                "symbol_id": None,
-                                "content": content,
-                                "start_line": uncovered_start + 1,
-                                "end_line": i,
-                                "token_count": tokens,
-                            })
+                            chunks.append(
+                                {
+                                    "file_id": db_file.id,
+                                    "symbol_id": None,
+                                    "content": content,
+                                    "start_line": uncovered_start + 1,
+                                    "end_line": i,
+                                    "token_count": tokens,
+                                }
+                            )
                     uncovered_start = None
 
         # Handle trailing uncovered
@@ -176,23 +185,36 @@ def chunk_file(
             tokens = count_tokens(content)
             if tokens > 10:
                 if tokens > max_tokens:
-                    chunks.extend(_sliding_window_chunk(
-                        region, db_file.id, None, offset=uncovered_start, max_tokens=max_tokens,
-                    ))
+                    chunks.extend(
+                        _sliding_window_chunk(
+                            region,
+                            db_file.id,
+                            None,
+                            offset=uncovered_start,
+                            max_tokens=max_tokens,
+                        )
+                    )
                 else:
-                    chunks.append({
-                        "file_id": db_file.id,
-                        "symbol_id": None,
-                        "content": content,
-                        "start_line": uncovered_start + 1,
-                        "end_line": len(lines),
-                        "token_count": tokens,
-                    })
+                    chunks.append(
+                        {
+                            "file_id": db_file.id,
+                            "symbol_id": None,
+                            "content": content,
+                            "start_line": uncovered_start + 1,
+                            "end_line": len(lines),
+                            "token_count": tokens,
+                        }
+                    )
     else:
         # No symbols — full sliding window
-        chunks.extend(_sliding_window_chunk(
-            lines, db_file.id, None, max_tokens=max_tokens,
-        ))
+        chunks.extend(
+            _sliding_window_chunk(
+                lines,
+                db_file.id,
+                None,
+                max_tokens=max_tokens,
+            )
+        )
 
     return chunks
 

@@ -103,7 +103,7 @@ def clone_repo(
     if total_size > max_bytes:
         shutil.rmtree(clone_path)
         raise ValueError(
-            f"Repository too large ({total_size // (1024*1024)}MB > {settings.max_clone_size_mb}MB limit)"
+            f"Repository too large ({total_size // (1024 * 1024)}MB > {settings.max_clone_size_mb}MB limit)"
         )
 
     logger.info("Clone complete: %s (%d MB)", clone_path, total_size // (1024 * 1024))

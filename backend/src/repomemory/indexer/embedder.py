@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # ── Embedding provider protocol ──
 
+
 class EmbeddingProvider(Protocol):
     def encode(self, texts: list[str], normalize: bool = True) -> np.ndarray: ...
 
@@ -89,7 +90,7 @@ class HuggingFaceAPIProvider:
                     break
                 except httpx.HTTPStatusError as e:
                     if e.response.status_code == 429:
-                        wait = 2 ** attempt * 5
+                        wait = 2**attempt * 5
                         logger.warning("HF rate limited, waiting %ds...", wait)
                         time.sleep(wait)
                     elif e.response.status_code == 503:
@@ -133,6 +134,7 @@ def _get_provider() -> EmbeddingProvider:
 
 # ── Index paths ──
 
+
 def _get_index_path(repo_id: int) -> Path:
     return settings.get_faiss_index_dir() / f"repo_{repo_id}.faiss"
 
@@ -143,6 +145,7 @@ def _get_mapping_path(repo_id: int) -> Path:
 
 # ── Public API ──
 
+
 def embed_chunks(repo_id: int) -> int:
     """Generate embeddings for all chunks of a repo and build FAISS index.
     Returns number of embeddings generated.
@@ -150,13 +153,7 @@ def embed_chunks(repo_id: int) -> int:
     provider = _get_provider()
 
     with get_session() as session:
-        chunks = (
-            session.query(Chunk)
-            .join(Chunk.file)
-            .filter(Chunk.file.has(repo_id=repo_id))
-            .order_by(Chunk.id)
-            .all()
-        )
+        chunks = session.query(Chunk).join(Chunk.file).filter(Chunk.file.has(repo_id=repo_id)).order_by(Chunk.id).all()
 
         if not chunks:
             logger.warning("No chunks to embed for repo %d", repo_id)

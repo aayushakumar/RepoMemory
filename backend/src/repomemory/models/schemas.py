@@ -4,8 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-
 # --- Repository ---
+
 
 class RepoCreate(BaseModel):
     url: str | None = None
@@ -42,6 +42,7 @@ class IndexingStats(BaseModel):
 
 # --- Search ---
 
+
 class SearchRequest(BaseModel):
     repo_id: int
     query: str = Field(min_length=1, max_length=2000)
@@ -57,6 +58,7 @@ class ComponentScores(BaseModel):
     symbol_match: float = 0.0
     memory_frecency: float = 0.0
     git_recency: float = 0.0
+    dependency_graph: float = 0.0
 
 
 class SnippetResponse(BaseModel):
@@ -106,6 +108,7 @@ class SearchResponse(BaseModel):
 
 # --- Memory ---
 
+
 class ActionRequest(BaseModel):
     query_id: int
     target_type: str  # file, symbol, chunk
@@ -122,6 +125,7 @@ class MemoryStatsResponse(BaseModel):
 
 # --- Task modes ---
 
+
 class TaskModeResponse(BaseModel):
     name: str
     description: str
@@ -130,11 +134,13 @@ class TaskModeResponse(BaseModel):
 
 # --- Export ---
 
+
 class ExportFormat(BaseModel):
     format: str = "markdown"  # markdown or json
 
 
 # --- AI Explain ---
+
 
 class ExplainRequest(BaseModel):
     query: str = Field(min_length=1, max_length=2000)

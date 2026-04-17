@@ -100,14 +100,16 @@ def scan_repository(repo_path: str | Path) -> list[ScannedFile]:
 
         content_hash = _compute_content_hash(filepath)
 
-        results.append(ScannedFile(
-            path=filepath,
-            relative_path=relative_str,
-            extension=filepath.suffix or filepath.name,
-            size_bytes=stat.st_size,
-            mtime=stat.st_mtime,
-            content_hash=content_hash,
-        ))
+        results.append(
+            ScannedFile(
+                path=filepath,
+                relative_path=relative_str,
+                extension=filepath.suffix or filepath.name,
+                size_bytes=stat.st_size,
+                mtime=stat.st_mtime,
+                content_hash=content_hash,
+            )
+        )
 
     logger.info("Scanned %d files in %s", len(results), repo_root)
     return results

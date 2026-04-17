@@ -4,8 +4,8 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import tree_sitter_python as tspython
 import tree_sitter_javascript as tsjavascript
+import tree_sitter_python as tspython
 import tree_sitter_typescript as tstypescript
 from tree_sitter import Language, Parser
 
@@ -57,7 +57,7 @@ class ExtractedSymbol:
 
 
 def _get_node_text(node, source_bytes: bytes) -> str:
-    return source_bytes[node.start_byte:node.end_byte].decode("utf-8", errors="replace")
+    return source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
 
 
 def _extract_python_symbols(root_node, source_bytes: bytes) -> list[ExtractedSymbol]:
@@ -71,13 +71,15 @@ def _extract_python_symbols(root_node, source_bytes: bytes) -> list[ExtractedSym
             params_node = node.child_by_field_name("parameters")
             name = _get_node_text(name_node, source_bytes) if name_node else "<anonymous>"
             sig = _get_node_text(params_node, source_bytes) if params_node else ""
-            symbols.append(ExtractedSymbol(
-                name=name,
-                kind="function",
-                start_line=node.start_point[0] + 1,
-                end_line=node.end_point[0] + 1,
-                signature=f"def {name}{sig}",
-            ))
+            symbols.append(
+                ExtractedSymbol(
+                    name=name,
+                    kind="function",
+                    start_line=node.start_point[0] + 1,
+                    end_line=node.end_point[0] + 1,
+                    signature=f"def {name}{sig}",
+                )
+            )
 
         elif node_type == "class_definition":
             name_node = node.child_by_field_name("name")
@@ -98,23 +100,27 @@ def _extract_python_symbols(root_node, source_bytes: bytes) -> list[ExtractedSym
                         m_params_node = child.child_by_field_name("parameters")
                         m_name = _get_node_text(m_name_node, source_bytes) if m_name_node else "<method>"
                         m_sig = _get_node_text(m_params_node, source_bytes) if m_params_node else ""
-                        cls_symbol.children.append(ExtractedSymbol(
-                            name=m_name,
-                            kind="method",
-                            start_line=child.start_point[0] + 1,
-                            end_line=child.end_point[0] + 1,
-                            signature=f"def {m_name}{m_sig}",
-                        ))
+                        cls_symbol.children.append(
+                            ExtractedSymbol(
+                                name=m_name,
+                                kind="method",
+                                start_line=child.start_point[0] + 1,
+                                end_line=child.end_point[0] + 1,
+                                signature=f"def {m_name}{m_sig}",
+                            )
+                        )
             symbols.append(cls_symbol)
 
         elif node_type in ("import_statement", "import_from_statement"):
             text = _get_node_text(node, source_bytes)
-            symbols.append(ExtractedSymbol(
-                name=text.strip(),
-                kind="import",
-                start_line=node.start_point[0] + 1,
-                end_line=node.end_point[0] + 1,
-            ))
+            symbols.append(
+                ExtractedSymbol(
+                    name=text.strip(),
+                    kind="import",
+                    start_line=node.start_point[0] + 1,
+                    end_line=node.end_point[0] + 1,
+                )
+            )
 
         elif node_type == "decorated_definition":
             # Handle decorated functions/classes
@@ -138,13 +144,15 @@ def _extract_js_ts_symbols(root_node, source_bytes: bytes) -> list[ExtractedSymb
                 params_node = child.child_by_field_name("parameters")
                 name = _get_node_text(name_node, source_bytes) if name_node else "<anonymous>"
                 sig = _get_node_text(params_node, source_bytes) if params_node else ""
-                symbols.append(ExtractedSymbol(
-                    name=name,
-                    kind="function",
-                    start_line=child.start_point[0] + 1,
-                    end_line=child.end_point[0] + 1,
-                    signature=f"function {name}{sig}",
-                ))
+                symbols.append(
+                    ExtractedSymbol(
+                        name=name,
+                        kind="function",
+                        start_line=child.start_point[0] + 1,
+                        end_line=child.end_point[0] + 1,
+                        signature=f"function {name}{sig}",
+                    )
+                )
 
             elif ntype == "class_declaration":
                 name_node = child.child_by_field_name("name")
@@ -164,23 +172,27 @@ def _extract_js_ts_symbols(root_node, source_bytes: bytes) -> list[ExtractedSymb
                             m_params_node = member.child_by_field_name("parameters")
                             m_name = _get_node_text(m_name_node, source_bytes) if m_name_node else "<method>"
                             m_sig = _get_node_text(m_params_node, source_bytes) if m_params_node else ""
-                            cls_symbol.children.append(ExtractedSymbol(
-                                name=m_name,
-                                kind="method",
-                                start_line=member.start_point[0] + 1,
-                                end_line=member.end_point[0] + 1,
-                                signature=f"{m_name}{m_sig}",
-                            ))
+                            cls_symbol.children.append(
+                                ExtractedSymbol(
+                                    name=m_name,
+                                    kind="method",
+                                    start_line=member.start_point[0] + 1,
+                                    end_line=member.end_point[0] + 1,
+                                    signature=f"{m_name}{m_sig}",
+                                )
+                            )
                 symbols.append(cls_symbol)
 
             elif ntype == "import_statement":
                 text = _get_node_text(child, source_bytes)
-                symbols.append(ExtractedSymbol(
-                    name=text.strip(),
-                    kind="import",
-                    start_line=child.start_point[0] + 1,
-                    end_line=child.end_point[0] + 1,
-                ))
+                symbols.append(
+                    ExtractedSymbol(
+                        name=text.strip(),
+                        kind="import",
+                        start_line=child.start_point[0] + 1,
+                        end_line=child.end_point[0] + 1,
+                    )
+                )
 
             elif ntype == "export_statement":
                 # Recurse into export to find declarations
@@ -196,13 +208,15 @@ def _extract_js_ts_symbols(root_node, source_bytes: bytes) -> list[ExtractedSymb
                             name = _get_node_text(name_node, source_bytes) if name_node else "<anonymous>"
                             params_node = value_node.child_by_field_name("parameters")
                             sig = _get_node_text(params_node, source_bytes) if params_node else ""
-                            symbols.append(ExtractedSymbol(
-                                name=name,
-                                kind="function",
-                                start_line=child.start_point[0] + 1,
-                                end_line=child.end_point[0] + 1,
-                                signature=f"const {name} = {sig} =>",
-                            ))
+                            symbols.append(
+                                ExtractedSymbol(
+                                    name=name,
+                                    kind="function",
+                                    start_line=child.start_point[0] + 1,
+                                    end_line=child.end_point[0] + 1,
+                                    signature=f"const {name} = {sig} =>",
+                                )
+                            )
 
     _walk(root_node)
     return symbols

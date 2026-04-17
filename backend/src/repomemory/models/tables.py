@@ -23,6 +23,7 @@ class Repository(Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     indexed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    last_commit_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     # Counts cached for fast lookup
     file_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -66,7 +67,9 @@ class Symbol(Base):
     start_line: Mapped[int] = mapped_column(Integer, nullable=False)
     end_line: Mapped[int] = mapped_column(Integer, nullable=False)
     signature: Mapped[str | None] = mapped_column(Text, nullable=True)
-    parent_symbol_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("symbols.id", ondelete="SET NULL"), nullable=True)
+    parent_symbol_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("symbols.id", ondelete="SET NULL"), nullable=True
+    )
 
     file: Mapped["File"] = relationship(back_populates="symbols")
     children: Mapped[list["Symbol"]] = relationship(back_populates="parent", remote_side=[parent_symbol_id])
@@ -121,7 +124,8 @@ class UserAction(Base):
     query_id: Mapped[int] = mapped_column(Integer, ForeignKey("queries.id", ondelete="CASCADE"), nullable=False)
     target_type: Mapped[str] = mapped_column(String(32), nullable=False)  # file, symbol, chunk
     target_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    action: Mapped[str] = mapped_column(String(32), nullable=False)  # opened, selected, accepted, dismissed, thumbs_up, thumbs_down
+    # opened, selected, accepted, dismissed, thumbs_up, thumbs_down
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     query: Mapped["Query"] = relationship(back_populates="actions")
@@ -135,3 +139,37 @@ class UserAction(Base):
 def _register_all():
     """Ensure all models are loaded (for create_all)."""
     pass
+
+
+class DependencyEdge(Base):
+    """Import/dependency relationship between files."""
+
+    __tablename__ = "dependency_edges"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    repo_id: Mapped[int] = mapped_column(Integer, ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    source_file_id: Mapped[int] = mapped_column(Integer, ForeignKey("files.id", ondelete="CASCADE"), nullable=False)
+    target_file_id: Mapped[int] = mapped_column(Integer, ForeignKey("files.id", ondelete="CASCADE"), nullable=False)
+    import_name: Mapped[str] = mapped_column(String(512), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), default="import")  # import, from_import, require
+
+    __table_args__ = (
+        Index("ix_dep_edges_repo", "repo_id"),
+        Index("ix_dep_edges_source", "source_file_id"),
+        Index("ix_dep_edges_target", "target_file_id"),
+    )
+
+
+class LearnedWeights(Base):
+    """Adaptive retrieval weights learned from user feedback."""
+
+    __tablename__ = "learned_weights"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    repo_id: Mapped[int] = mapped_column(Integer, ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    mode: Mapped[str] = mapped_column(String(32), nullable=False)
+    weights_json: Mapped[str] = mapped_column(Text, nullable=False)  # JSON dict of signal -> weight
+    sample_count: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    __table_args__ = (Index("ix_learned_weights_repo_mode", "repo_id", "mode", unique=True),)
