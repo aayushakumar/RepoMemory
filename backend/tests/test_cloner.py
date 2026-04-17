@@ -70,6 +70,7 @@ class TestCloneRepo:
     @patch("git.Repo")
     def test_clone_success(self, mock_repo_cls, tmp_path):
         from repomemory.config import settings
+
         settings.clone_dir = tmp_path / "repos"
 
         # Mock clone_from to create the directory
@@ -100,6 +101,7 @@ class TestCloneRepo:
         import git as gitmodule
 
         from repomemory.config import settings
+
         settings.clone_dir = tmp_path / "repos"
 
         mock_repo_cls.clone_from.side_effect = gitmodule.GitCommandError("clone", "secret_token failed")
@@ -114,6 +116,7 @@ class TestCloneRepo:
 class TestDeleteClone:
     def test_delete_existing(self, tmp_path):
         from repomemory.config import settings
+
         settings.clone_dir = tmp_path / "repos"
 
         clone_path = tmp_path / "repos" / "repo_1"
@@ -127,6 +130,7 @@ class TestDeleteClone:
 
     def test_delete_nonexistent_is_noop(self, tmp_path):
         from repomemory.config import settings
+
         settings.clone_dir = tmp_path / "repos"
         (tmp_path / "repos").mkdir(parents=True, exist_ok=True)
 

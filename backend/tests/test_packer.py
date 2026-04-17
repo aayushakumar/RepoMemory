@@ -19,6 +19,7 @@ def _make_mock_results() -> list[RankedResult]:
                 "symbol_match": 0.6,
                 "memory_frecency": 0.0,
                 "git_recency": 0.0,
+                "dependency_graph": 0.0,
             },
             explanation="High lexical match; contains rotate_token() symbol",
             snippets=[
@@ -51,6 +52,7 @@ def _make_mock_results() -> list[RankedResult]:
                 "symbol_match": 0.0,
                 "memory_frecency": 0.0,
                 "git_recency": 0.0,
+                "dependency_graph": 0.0,
             },
             explanation="Test file for auth module",
             snippets=[

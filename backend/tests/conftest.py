@@ -1,13 +1,11 @@
 """Shared test fixtures."""
 
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from repomemory.config import settings
-from repomemory.models.db import Base, get_engine, get_session, init_db, reset_engine
+from repomemory.models.db import init_db, reset_engine
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SAMPLE_REPO = FIXTURES_DIR / "sample_repo"

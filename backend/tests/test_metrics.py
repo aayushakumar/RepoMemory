@@ -1,11 +1,11 @@
 """Tests for evaluation metrics."""
 
 from repomemory.evaluation.metrics import (
-    recall_at_k,
-    precision_at_k,
-    mrr,
     average_precision,
+    mrr,
     ndcg_at_k,
+    precision_at_k,
+    recall_at_k,
 )
 
 

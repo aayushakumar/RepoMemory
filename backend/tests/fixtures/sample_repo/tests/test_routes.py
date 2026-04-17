@@ -1,6 +1,6 @@
 """Tests for API routes."""
 
-from routes.api import handle_login, handle_register, handle_profile
+from routes.api import handle_login, handle_profile, handle_register
 
 
 def test_login_success():
