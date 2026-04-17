@@ -5,10 +5,12 @@
 **AI-powered code retrieval engine — index any GitHub repo, search with natural language**
 
 [![PyPI](https://img.shields.io/pypi/v/repomemory.svg)](https://pypi.org/project/repomemory/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/repomemory.svg)](https://pypi.org/project/repomemory/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3572A5.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/aayushakumar/RepoMemory/actions/workflows/ci.yml/badge.svg)](https://github.com/aayushakumar/RepoMemory/actions/workflows/ci.yml)
 
 *Point it at any GitHub URL. Get token-budget-aware context packs — ready to paste into any LLM. Free to deploy, free to run.*
 
