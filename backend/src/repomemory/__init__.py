@@ -10,7 +10,7 @@ Quick start:
     results = rm.search("how does authentication work?")
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.3"
 
 
 class RepoMemory:

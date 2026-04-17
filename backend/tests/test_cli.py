@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 
+from repomemory import __version__
 from repomemory.cli import main
 
 
@@ -18,7 +19,7 @@ class TestCLI:
         runner = CliRunner()
         result = runner.invoke(main, ["--version"])
         assert result.exit_code == 0
-        assert "0.2.0" in result.output
+        assert __version__ in result.output
 
     def test_config_command(self):
         runner = CliRunner()

@@ -1,5 +1,3 @@
-<div align="center">
-
 # RepoMemory
 
 **AI-powered code retrieval engine — index any GitHub repo, search with natural language**
@@ -13,8 +11,6 @@
 [![CI](https://github.com/aayushakumar/RepoMemory/actions/workflows/ci.yml/badge.svg)](https://github.com/aayushakumar/RepoMemory/actions/workflows/ci.yml)
 
 *Point it at any GitHub URL. Get token-budget-aware context packs — ready to paste into any LLM. Free to deploy, free to run.*
-
-</div>
 
 ---
 

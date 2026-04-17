@@ -25,10 +25,12 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    from repomemory import __version__
+
     app = FastAPI(
         title="RepoMemory",
         description="AI-powered code retrieval engine — index any GitHub repo and search with natural language",
-        version="0.2.0",
+        version=__version__,
         lifespan=lifespan,
     )
 
@@ -54,7 +56,7 @@ def create_app() -> FastAPI:
     async def health():
         return {
             "status": "ok",
-            "version": "0.2.0",
+            "version": __version__,
             "llm_enabled": settings.llm_enabled,
             "embedding_provider": settings.embedding_provider,
         }
